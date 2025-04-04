@@ -1,0 +1,370 @@
+:root {
+  --primary-color: #00C4FF;
+  --text-color: #2d3748;
+  --border-color: #e2e8f0;
+  --hover-color: #0056b3;
+  --background-color: #f7fafc;
+  --google-bg: #040A2A;
+  --google-hover: #091768;
+  --font-heading: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.homePage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: linear-gradient(135deg, #f6f9fc 0%, #f1f4f8 100%);
+}
+
+/* Blue bars styling */
+.blueBox {
+  width: 100%;
+  height: 37px;
+  background-color: var(--primary-color);
+  position: fixed;
+  left: 0;
+  z-index: 10;
+}
+
+.blueBox.top {
+  top: 0;
+  border-radius: 0 0 18px 18px;
+}
+
+.blueBox.bottom {
+  bottom: 0;
+  border-radius: 18px 18px 0 0;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  padding: 37px 0;
+  height: calc(100vh - 74px);
+  overflow: hidden;
+}
+
+/* Left Section Styles */
+.leftSection {
+  flex: 1;
+  padding: 2rem 4rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+}
+
+.pmiLogo {
+  width: 120px;
+  margin-bottom: 3rem;
+}
+
+.pmiLogo img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.heroContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 500px;
+}
+
+.heroContent h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text-color);
+  margin-bottom: 1.25rem;
+  line-height: 1.1;
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  /* -webkit-background-clip: text; */
+  -webkit-text-fill-color: transparent;
+}
+
+.heroContent > p {
+  font-size: 1.375rem;
+  color: #4a5568;
+  margin-bottom: 3rem;
+  line-height: 1.6;
+  font-family: var(--font-body);
+  font-weight: 400;
+}
+
+.features {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  font-family: var(--font-body);
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.featureItem:hover {
+  transform: translateX(10px);
+}
+
+.featureIcon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 196, 255, 0.1);
+  border-radius: 10px;
+}
+
+.featureItem p {
+  font-size: 1.120rem;
+  color: var(--text-color);
+  margin: 0;
+  font-weight: 500;
+  font-family: var(--font-body);
+}
+
+/* Right Section Styles */
+.rightSection {
+  flex: 1;
+  padding: 2rem 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+}
+
+.appLogo {
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 2.5rem;
+}
+
+.appLogo img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 85px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.actionButtons {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.signupButton {
+  width: 100%;
+  height: 56px;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 28px;
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-family: var(--font-heading);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.signupButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 196, 255, 0.4);
+}
+
+.buttonGlow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+  transform: rotate(45deg);
+  transition: transform 0.3s ease;
+  pointer-events: none;
+}
+
+.signupButton:hover .buttonGlow {
+  transform: rotate(45deg) translate(50%, 50%);
+}
+
+.googleButton {
+  width: 100%;
+  height: 56px;
+  background-color: var(--google-bg);
+  border: none;
+  border-radius: 28px;
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 500;
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.googleButton:hover {
+  background-color: var(--google-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(4, 10, 42, 0.3);
+}
+
+.googleIcon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.googleIcon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.loginSection {
+  text-align: center;
+  width: 100%;
+}
+
+.divider {
+  position: relative;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background-color: var(--border-color);
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+.divider span {
+  background-color: #f0f7ff;
+  padding: 0 1rem;
+  color: #718096;
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+}
+
+.loginLink {
+  color: var(--text-color);
+  text-decoration: none;
+  font-size: 1rem;
+  font-family: var(--font-body);
+  transition: color 0.3s ease;
+}
+
+.loginLink span {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.loginLink:hover span {
+  text-decoration: underline;
+}
+
+@media (max-width: 1024px) {
+  .mainContent {
+    flex-direction: column;
+    height: calc(100vh - 74px);
+    padding: 37px 1rem;
+  }
+
+  .leftSection,
+  .rightSection {
+    flex: none;
+    padding: 1.5rem 2rem;
+  }
+
+  .heroContent {
+    text-align: center;
+    margin: 0 auto;
+    justify-content: flex-start;
+  }
+
+  .features {
+    max-width: 500px;
+    margin: 2rem auto;
+  }
+
+  .rightSection {
+    padding-top: 0;
+  }
+
+  .heroContent h1 {
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .mainContent {
+    padding: 37px 0.5rem;
+  }
+
+  .leftSection,
+  .rightSection {
+    padding: 1rem;
+  }
+
+  .heroContent h1 {
+    font-size: 2.5rem;
+  }
+
+  .heroContent > p {
+    font-size: 1.125rem;
+  }
+
+  .features {
+    gap: 0.75rem;
+  }
+
+  .featureItem {
+    padding: 0.75rem;
+  }
+
+  .actionButtons {
+    max-width: 100%;
+  }
+}
