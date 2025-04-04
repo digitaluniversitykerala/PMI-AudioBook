@@ -1,3 +1,21 @@
 # PMI-Audiobook
 
-This repository will work as a monorepo. Both frontend and backend code will be in respectively named folders.
+## Getting started
+
+### Prerequisites
+
+* Node.js version >= 20.16.0
+
+
+`git clone https://github.com/digitaluniversitykerala/PMI-AudioBook`
+
+`cd PMI-AudioBook`
+
+### To install necessary dependencies for frontend
+
+`cd frontend`
+`npm install`
+
+To run the server
+
+`npm run dev`
