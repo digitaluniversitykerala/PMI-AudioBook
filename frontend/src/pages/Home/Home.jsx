@@ -1,69 +1,91 @@
 import React from "react";
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 import logo from "@/assets/logo.jpg";
 import pmi from "@/assets/pmi.png";
-import googleLogo from "@/assets/googleLogo.png";
 import styles from "./Home.module.css";
 
-// Add modern font imports
-// import '@fontsource/plus-jakarta-sans/400.css';
-// import '@fontsource/plus-jakarta-sans/600.css';
-// import '@fontsource/plus-jakarta-sans/800.css';
-// import '@fontsource/inter/400.css';
-// import '@fontsource/inter/500.css';
-// import '@fontsource/inter/600.css';
+// Importin the Google login button and JWT decoder
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
 const Home = () => {
+  // Handles successful Google login
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const token = credentialResponse.credential; // Gets Google ID token
+      const userInfo = jwtDecode(token); // Decodes user info (name, email)
+      console.log("Google User:", userInfo);
+
+      // Sends token to backend to verify and get app JWT
+      const res = await fetch("http://localhost:5000/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }),
+      });
+
+      if (!res.ok) throw new Error("Failed to login with Google");
+      const data = await res.json();
+      console.log("Backend response:", data);
+
+      if (data.success) {
+        // Saves JWT to localStorage
+        localStorage.setItem("token", data.token);
+
+        // Redirects user to dashboard
+        window.location.href = "/dashboard";
+      } else {
+        alert("Google login fails on server");
+      }
+    } catch (err) {
+      console.error("Google login error:", err);
+    }
+  };
+
+  // Handles Google login failure
+  const handleGoogleFailure = () => {
+    console.log("Google Login fails");
+    alert("Google login fails. Please try again.");
+  };
+
   return (
     <div className={styles.homePage}>
-      {/* Top blue bar */}
+      {/* Shows top blue bar */}
       <div className={`${styles.blueBox} ${styles.top}`}></div>
 
       <main className={styles.mainContent}>
-        {/* Left Section */}
+        {/* Left section displays PMI logo and welcome text */}
         <div className={styles.leftSection}>
           <div className={styles.pmiLogo}>
             <img src={pmi} alt="PMI Logo" />
           </div>
           <div className={styles.heroContent}>
             <h1>Welcome to PMI Audiobook</h1>
-            <p>Your gateway to knowledge through audio learning</p>
-            <div className={styles.features}>
-              <div className={styles.featureItem}>
-                <span className={styles.featureIcon}>🎧</span>
-                <p>Access premium audiobooks</p>
-              </div>
-              <div className={styles.featureItem}>
-                <span className={styles.featureIcon}>📱</span>
-                <p>Listen on any device</p>
-              </div>
-              <div className={styles.featureItem}>
-                <span className={styles.featureIcon}>🚀</span>
-                <p>Learn at your own pace</p>
-              </div>
-            </div>
+            <p>Provides a gateway to knowledge through audio learning</p>
           </div>
         </div>
 
-        {/* Right Section */}
+        {/* Right section displays app logo and action buttons */}
         <div className={styles.rightSection}>
           <div className={styles.appLogo}>
             <img src={logo} alt="App Logo" />
           </div>
-          
+
           <div className={styles.actionButtons}>
+            {/* Signup button navigates to signup page */}
             <Link to="/signup1" className={styles.signupButton}>
               Get Started
               <div className={styles.buttonGlow}></div>
             </Link>
-            
-            <button className={styles.googleButton}>
-              <span className={styles.googleIcon}>
-                <img src={googleLogo} alt="Google Logo" />
-              </span>
-              <span>Continue with Google</span>
-            </button>
-            
+
+            {/* Google login button triggers login flow */}
+            <div className={styles.googleButton}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleFailure}
+              />
+            </div>
+
+            {/* Divider and login link for existing users */}
             <div className={styles.loginSection}>
               <div className={styles.divider}>
                 <span>or</span>
@@ -76,7 +98,7 @@ const Home = () => {
         </div>
       </main>
 
-      {/* Bottom blue bar */}
+      {/* Shows bottom blue bar */}
       <div className={`${styles.blueBox} ${styles.bottom}`}></div>
     </div>
   );
