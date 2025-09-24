@@ -72,7 +72,7 @@ const Home = () => {
 
           <div className={styles.actionButtons}>
             {/* Signup button navigates to signup page */}
-            <Link to="/signup1" className={styles.signupButton}>
+            <Link to="/signup" className={styles.signupButton}>
               Get Started
               <div className={styles.buttonGlow}></div>
             </Link>

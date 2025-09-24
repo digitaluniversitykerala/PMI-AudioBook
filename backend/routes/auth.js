@@ -1,5 +1,5 @@
 import express from "express";
-import { signup, login } from "../controllers/authController.js"; // Imports signup/login logic
+import { signup, login, forgotPassword, resetPassword, refreshToken, logout } from "../controllers/authController.js"; // Imports auth logic
 import { OAuth2Client } from "google-auth-library"; // Imports Google OAuth2 client
 import User from "../models/User.js"; // Imports User model
 import jwt from "jsonwebtoken"; // Imports JWT for session token generation
@@ -57,6 +57,14 @@ router.post("/google", async (req, res) => {
 // Handles normal signup and login routes
 router.post("/signup", signup);
 router.post("/login", login);
+
+// Password reset routes
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
+
+// Token management routes
+router.post("/refresh-token", refreshToken);
+router.post("/logout", logout);
 
 // Exports router for use in server.js
 export default router;
