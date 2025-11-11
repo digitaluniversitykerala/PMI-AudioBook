@@ -80,31 +80,64 @@ const Login = () => {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
+        console.log('Google login successful, token received:', tokenResponse);
         setLoading(true);
+        setError('');
+        
         if (voiceEnabled) {
           speak("Processing Google sign in.");
         }
+        announce("Processing Google sign in.", "polite");
         
+        // First, get the user info to ensure we have a valid token
+        const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        }).then(res => res.json());
+        
+        console.log('Google user info:', userInfo);
+        
+        if (!userInfo || userInfo.error) {
+          throw new Error('Failed to fetch user info from Google');
+        }
+        
+        // Send the ID token to your backend for verification
         const response = await API.post("/auth/google", {
-          token: tokenResponse.access_token
+          token: tokenResponse.id_token || tokenResponse.access_token
         });
         
+        console.log('Backend response:', response.data);
+        
         if (response.data.token) {
+          // Store the tokens and user data
           localStorage.setItem("token", response.data.token);
           if (response.data.refreshToken) {
             localStorage.setItem("refreshToken", response.data.refreshToken);
           }
-          localStorage.setItem("user", JSON.stringify(response.data.user));
+          if (response.data.user) {
+            localStorage.setItem("user", JSON.stringify(response.data.user));
+          }
+          
+          console.log('Authentication successful, redirecting to dashboard...');
           
           if (voiceEnabled) {
-            speak(`Welcome ${response.data.user.name}. Redirecting to dashboard.`);
+            const name = response.data.user?.name || 'User';
+            speak(`Welcome ${name}. Redirecting to dashboard.`);
           }
-          announce("Google login successful.", "assertive");
-          navigate("/dashboard");
+          
+          announce("Google login successful. Redirecting to dashboard.", "assertive");
+          
+          // Add a small delay to allow the announcement to be read
+          setTimeout(() => {
+            navigate("/dashboard", { replace: true });
+          }, 500);
+        } else {
+          throw new Error('No token received from server');
         }
       } catch (err) {
-        const errorMsg = "Google login failed. Please try again.";
+        console.error('Google login error:', err);
+        const errorMsg = err.response?.data?.error || "Google login failed. Please try again.";
         setError(errorMsg);
+        
         if (voiceEnabled) {
           speak(errorMsg);
         }
@@ -113,9 +146,11 @@ const Login = () => {
         setLoading(false);
       }
     },
-    onError: () => {
-      const errorMsg = "Google login failed";
+    onError: (error) => {
+      console.error('Google OAuth error:', error);
+      const errorMsg = error.error_description || "Google login was cancelled or failed. Please try again.";
       setError(errorMsg);
+      
       if (voiceEnabled) {
         speak(errorMsg);
       }

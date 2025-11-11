@@ -12,16 +12,42 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 // Handles Google login requests
 router.post("/google", async (req, res) => {
   try {
-    const { token } = req.body; // Receives Google ID token from frontend
+    const { token } = req.body; // Receives Google token from frontend
+    
+    if (!token) {
+      return res.status(400).json({ error: 'No token provided' });
+    }
 
-    // Verifies token with Google
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    let payload;
+    
+    try {
+      // First try to verify as ID token
+      const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      payload = ticket.getPayload();
+    } catch (idTokenError) {
+      console.log('ID token verification failed, trying as access token:', idTokenError);
+      
+      // If ID token verification fails, try to get user info using the access token
+      try {
+        const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch user info from Google');
+        }
+        payload = await response.json();
+      } catch (accessTokenError) {
+        console.error('Access token verification failed:', accessTokenError);
+        return res.status(401).json({ error: 'Invalid token' });
+      }
+    }
 
-    const payload = ticket.getPayload(); // Extracts user info (name, email, picture)
     console.log("Google user:", payload);
+
+    if (!payload.email) {
+      return res.status(400).json({ error: 'No email found in Google profile' });
+    }
 
     // Checks if user exists in database
     let user = await User.findOne({ email: payload.email });
@@ -29,9 +55,10 @@ router.post("/google", async (req, res) => {
     // If user does not exist, creates new user with dummy password
     if (!user) {
       user = await User.create({
-        name: payload.name,
+        name: payload.name || payload.email.split('@')[0],
         email: payload.email,
         password: "google-oauth", // dummy password
+        profilePicture: payload.picture || ''
       });
     }
 
