@@ -80,7 +80,6 @@ const Login = () => {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        console.log('Google login successful, token received:', tokenResponse);
         setLoading(true);
         setError('');
         
@@ -94,7 +93,6 @@ const Login = () => {
           headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
         }).then(res => res.json());
         
-        console.log('Google user info:', userInfo);
         
         if (!userInfo || userInfo.error) {
           throw new Error('Failed to fetch user info from Google');
@@ -105,7 +103,6 @@ const Login = () => {
           token: tokenResponse.id_token || tokenResponse.access_token
         });
         
-        console.log('Backend response:', response.data);
         
         if (response.data.token) {
           // Store the tokens and user data
@@ -117,7 +114,6 @@ const Login = () => {
             localStorage.setItem("user", JSON.stringify(response.data.user));
           }
           
-          console.log('Authentication successful, redirecting to dashboard...');
           
           if (voiceEnabled) {
             const name = response.data.user?.name || 'User';
@@ -134,7 +130,6 @@ const Login = () => {
           throw new Error('No token received from server');
         }
       } catch (err) {
-        console.error('Google login error:', err);
         const errorMsg = err.response?.data?.error || "Google login failed. Please try again.";
         setError(errorMsg);
         

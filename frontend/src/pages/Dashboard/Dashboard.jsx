@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, LogOut, Volume2, VolumeX, Contrast, Type, Search, Play, Pause, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { useAccessibility, speak } from "@/hooks/useAccessibility";
 import API from "@/api";
+import AdminUpload from "@/components/AdminUpload";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ const Dashboard = () => {
   const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
+  const audioRef = useRef(null);
+  const [playback, setPlayback] = useState({ currentTime: 0, duration: 0 });
 
   const {
     highContrast,
@@ -38,97 +41,68 @@ const Dashboard = () => {
       const parsedUser = JSON.parse(userData);
       setUser(parsedUser);
       
-      // Simulate loading audiobooks
-      setTimeout(() => {
-        setLoading(false);
-        
-        // Malayalam Audiobooks Data
-        const books = [
-          {
-            id: 1,
-            title: "അദ്ധ്യാത്മരാമായണം കിളിപ്പാട്ട്",
-            titleEn: "Adhyathmaramayanam Kilippattu",
-            author: "തുഞ്ചത്ത് എഴുത്തച്ഛൻ",
-            authorEn: "Thunchaththu Ezhuthachan",
-            duration: "15 hours 30 minutes",
-            category: "പുരാണം",
-            description: "മലയാള സാഹിത്യത്തിന്റെ ആദ്യകൃതിയായി കണക്കാക്കപ്പെടുന്ന ഈ കൃതി രാമായണത്തിന്റെ മലയാള ഭാഷ്യമാണ്.",
-            chapters: [
-              { id: 1, title: "ബാലകാണ്ഡം (1-20)", duration: "45:30", audioUrl: "/audio/books/1/chapters/chapter_1.mp3" },
-              { id: 2, title: "അയോദ്ധ്യാകാണ്ഡം (1-25)", duration: "1:20:15", audioUrl: "/audio/books/1/chapters/chapter_2.mp3" },
-              { id: 3, title: "അരണ്യകാണ്ഡം (1-30)", duration: "2:15:45", audioUrl: "/audio/books/1/chapters/chapter_3.mp3" },
-              { id: 4, title: "കിഷ്കിന്ധാകാണ്ഡം (1-25)", duration: "1:45:30", audioUrl: "/audio/books/1/chapters/chapter_4.mp3" },
-              { id: 5, title: "സുന്ദരകാണ്ഡം (1-35)", duration: "2:30:15", audioUrl: "/audio/books/1/chapters/chapter_5.mp3" },
-              { id: 6, title: "യുദ്ധകാണ്ഡം (1-40)", duration: "3:15:20", audioUrl: "/audio/books/1/chapters/chapter_6.mp3" },
-              { id: 7, title: "ഉത്തരകാണ്ഡം (1-30)", duration: "2:18:15", audioUrl: "/audio/books/1/chapters/chapter_7.mp3" }
-            ],
-            coverImage: "/covers/adhyathmaramayanam.jpg"
-          },
-          {
-            id: 2,
-            title: "ഒരു ദിവസത്തെ സാക്ഷ്യം",
-            titleEn: "Oru Divasathe Sathyam",
-            author: "എസ്.കെ. പൊറ്റക്കാട്",
-            authorEn: "S.K. Pottekkatt",
-            duration: "8 hours 45 minutes",
-            category: "നോവൽ",
-            description: "ഒരു ദിവസത്തെ സംഭവങ്ങളിലൂടെ സമൂഹത്തിന്റെ വിവിധ മുഖങ്ങൾ ചിത്രീകരിക്കുന്ന ഒരു ശക്തമായ നോവൽ.",
-            chapters: [
-              { id: 1, title: "പ്രഭാതം", duration: "25:30", audioUrl: "/audio/books/2/chapters/chapter_1.mp3" },
-              { id: 2, title: "ഉച്ചയ്ക്ക് മുമ്പ്", duration: "1:05:15", audioUrl: "/audio/books/2/chapters/chapter_2.mp3" },
-              { id: 3, title: "ഉച്ചയ്ക്ക് ശേഷം", duration: "1:20:45", audioUrl: "/audio/books/2/chapters/chapter_3.mp3" },
-              { id: 4, title: "സന്ധ്യയ്ക്ക് മുമ്പ്", duration: "1:15:30", audioUrl: "/audio/books/2/chapters/chapter_4.mp3" },
-              { id: 5, title: "സന്ധ്യ", duration: "45:15", audioUrl: "/audio/books/2/chapters/chapter_5.mp3" },
-              { id: 6, title: "രാത്രി", duration: "2:33:20", audioUrl: "/audio/books/2/chapters/chapter_6.mp3" }
-            ],
-            coverImage: "/covers/oru-divasathe-sathyam.jpg"
-          },
-          {
-            id: 3,
-            title: "അരയന്നങ്ങൾ",
-            titleEn: "Arayannangal",
-            author: "മുത്തശ്ശി രാഘവൻ പിള്ള",
-            authorEn: "Muthassi Raghavan Pillai",
-            duration: "6 hours 20 minutes",
-            category: "നോവൽ",
-            description: "ഒരു കുടുംബത്തിന്റെ കഥയിലൂടെ സമകാലീന സാമൂഹ്യ പ്രതിഭാസങ്ങൾ ചിത്രീകരിക്കുന്ന നോവൽ.",
-            chapters: [
-              { id: 1, title: "ആമുഖം", duration: "15:30", audioUrl: "/audio/books/3/chapters/chapter_1.mp3" },
-              { id: 2, title: "പ്രാരംഭം", duration: "45:15", audioUrl: "/audio/books/3/chapters/chapter_2.mp3" },
-              { id: 3, title: "വികാസം", duration: "1:30:45", audioUrl: "/audio/books/3/chapters/chapter_3.mp3" },
-              { id: 4, title: "സംഘർഷം", duration: "1:45:30", audioUrl: "/audio/books/3/chapters/chapter_4.mp3" },
-              { id: 5, title: "ഉച്ചാരണം", duration: "1:20:15", audioUrl: "/audio/books/3/chapters/chapter_5.mp3" },
-              { id: 6, title: "അവസാനം", duration: "1:02:45", audioUrl: "/audio/books/3/chapters/chapter_6.mp3" }
-            ],
-            coverImage: "/covers/arayannangal.jpg"
-          },
-          {
-            id: 4,
-            title: "കാശ്മീരത്തെ കുഞ്ഞാലി മരയ്ക്കാരൻ",
-            titleEn: "Kashmirile Kunjali Marakkar",
-            author: "കെ.പി. കേശവമേനോൻ",
-            authorEn: "K.P. Kesava Menon",
-            duration: "10 hours 15 minutes",
-            category: "ചരിത്ര നോവൽ",
-            description: "കേരളത്തിന്റെ സമുദ്ര ചരിത്രത്തിലെ പ്രധാന വ്യക്തിത്വമായ കുഞ്ഞാലി മരയ്ക്കാരെ കുറിച്ചുള്ള ചരിത്രാത്മക നോവൽ.",
-            chapters: [
-              { id: 1, title: "ആമുഖം", duration: "20:15", audioUrl: "/audio/books/4/chapters/chapter_1.mp3" },
-              { id: 2, title: "കുഞ്ഞാലിയുടെ ജനനം", duration: "35:45", audioUrl: "/audio/books/4/chapters/chapter_2.mp3" },
-              { id: 3, title: "സമുദ്രയാത്ര", duration: "1:10:30", audioUrl: "/audio/books/4/chapters/chapter_3.mp3" },
-              { id: 4, title: "യുദ്ധങ്ങൾ", duration: "2:05:15", audioUrl: "/audio/books/4/chapters/chapter_4.mp3" },
-              { id: 5, title: "വീരമൃത്യു", duration: "50:30", audioUrl: "/audio/books/4/chapters/chapter_5.mp3" },
-              { id: 6, title: "അനുബന്ധം", duration: "25:45", audioUrl: "/audio/books/4/chapters/chapter_6.mp3" }
-            ],
-            coverImage: "/covers/kunhali-marikkar.jpg"
+      // Fetch audiobooks from backend
+      const fetchAudiobooks = async () => {
+        try {
+          const response = await API.get('/auth/books');
+          const books = response.data.books || response.data || [];
+          
+          // Transform data if needed to match frontend structure
+          const transformedBooks = books.map(book => {
+            // Normalize audio/cover paths from DB (handle old Windows-style backslashes)
+            const rawAudio = book.audioFile || null;
+            const rawCover = book.coverImage || null;
+            const normalizedAudio = rawAudio ? String(rawAudio).replace(/\\/g, '/') : null;
+            const normalizedCover = rawCover ? String(rawCover).replace(/\\/g, '/') : null;
+
+            const audioPath = normalizedAudio
+              ? (normalizedAudio.startsWith('/uploads/')
+                  ? normalizedAudio
+                  : `/uploads/${normalizedAudio.replace(/^uploads[\/]/, '')}`)
+              : null;
+
+            const coverPath = normalizedCover
+              ? (normalizedCover.startsWith('/uploads/')
+                  ? normalizedCover
+                  : `/uploads/${normalizedCover.replace(/^uploads[\/]/, '')}`)
+              : '/placeholder-book.jpg';
+
+            return {
+              id: book._id,
+              title: book.title,
+              titleEn: book.titleEn || book.title,
+              author: book.authors?.[0]?.name || book.author || 'Unknown',
+              authorEn: book.authors?.[0]?.name || book.author || 'Unknown',
+              duration: book.duration ? `${Math.floor(book.duration / 60)} hours ${book.duration % 60} minutes` : 'Unknown',
+              category: book.genres?.[0]?.name || book.category || 'Uncategorized',
+              description: book.description || 'No description available',
+              audioUrl: audioPath,
+              coverImage: coverPath,
+              narrator: book.narrator,
+              rating: book.rating || 0,
+              totalPlays: book.totalPlays || 0,
+            };
+          });
+          
+          setAudiobooks(transformedBooks);
+          
+          // Announce dashboard loaded
+          if (voiceEnabled) {
+            speak(`Welcome to your dashboard ${parsedUser.name}. You have access to ${transformedBooks.length} audiobooks.`);
           }
-        ];
-        setAudiobooks(books);
-        
-        // Announce dashboard loaded
-        if (voiceEnabled) {
-          speak(`Welcome to your dashboard ${parsedUser.name}. You have access to ${books.length} audiobooks.`);
+        } catch (error) {
+          console.error('Error fetching audiobooks:', error);
+          // Fallback to empty array if API fails
+          setAudiobooks([]);
+          if (voiceEnabled) {
+            speak(`Welcome to your dashboard ${parsedUser.name}. No audiobooks available at the moment.`);
+          }
+        } finally {
+          setLoading(false);
         }
-      }, 500);
+      };
+      
+      fetchAudiobooks();
     } catch (error) {
       console.error("Error parsing user data:", error);
       navigate("/login");
@@ -141,6 +115,35 @@ const Dashboard = () => {
       announce("Dashboard loaded successfully", "polite");
     }
   }, [loading, user, voiceEnabled, announce]);
+
+  // Attach audio events for progress tracking
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const onTimeUpdate = () => {
+      setPlayback({ currentTime: audio.currentTime || 0, duration: audio.duration || 0 });
+    };
+
+    const onLoadedMetadata = () => {
+      setPlayback({ currentTime: 0, duration: audio.duration || 0 });
+    };
+
+    const onEnded = () => {
+      setPlayback({ currentTime: 0, duration: audio.duration || 0 });
+      setCurrentlyPlaying(null);
+    };
+
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    audio.addEventListener('ended', onEnded);
+
+    return () => {
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+      audio.removeEventListener('ended', onEnded);
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -163,6 +166,35 @@ const Dashboard = () => {
   };
 
   const handlePlayAudiobook = (audiobook) => {
+    if (!audiobook.audioUrl) {
+      console.warn("No audio URL for audiobook", audiobook);
+      return;
+    }
+
+    const audio = audioRef.current;
+    if (audio) {
+      // If another book is playing, stop it and reset progress
+      if (currentlyPlaying && currentlyPlaying !== audiobook.id) {
+        audio.pause();
+        audio.currentTime = 0;
+        setPlayback(prev => ({ ...prev, currentTime: 0 }));
+      }
+
+      // Use the backend URL that serves /uploads statically
+      audio.src = `http://localhost:5000${audiobook.audioUrl}`;
+
+      // Some browsers may reject the play() promise even when audio plays fine.
+      // We intentionally ignore those non-fatal errors to avoid noisy console output.
+      try {
+        const playPromise = audio.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(() => {});
+        }
+      } catch {
+        // Swallow play errors; user can retry.
+      }
+    }
+
     setCurrentlyPlaying(audiobook.id);
     if (voiceEnabled) {
       speak(`Now playing ${audiobook.title} by ${audiobook.author}`);
@@ -171,6 +203,11 @@ const Dashboard = () => {
   };
 
   const handlePauseAudiobook = () => {
+    const audio = audioRef.current;
+    if (audio) {
+      audio.pause();
+    }
+
     const audiobook = audiobooks.find(book => book.id === currentlyPlaying);
     if (voiceEnabled && audiobook) {
       speak(`Paused ${audiobook.title}`);
@@ -273,6 +310,14 @@ const Dashboard = () => {
           </p>
         </div>
 
+        {/* Admin panel - only visible for admin users */}
+        {user?.role === "admin" && (
+          <div className="mb-10">
+            <h3 className="text-2xl font-semibold mb-4">Admin Panel: Upload Audiobooks</h3>
+            <AdminUpload />
+          </div>
+        )}
+
         {/* Search bar */}
         <div className="mb-8">
           <div className="relative max-w-xl">
@@ -343,7 +388,14 @@ const Dashboard = () => {
                       Now Playing...
                     </span>
                     <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-indigo-600 animate-pulse" style={{ width: "30%" }}></div>
+                      <div
+                        className="h-full bg-indigo-600 transition-all duration-150"
+                        style={{
+                          width: playback.duration > 0
+                            ? `${Math.min(100, (playback.currentTime / playback.duration) * 100)}%`
+                            : "0%",
+                        }}
+                      ></div>
                     </div>
                   </div>
                 )}
@@ -372,6 +424,9 @@ const Dashboard = () => {
           </div>
         </div>
       </main>
+
+      {/* Hidden global audio player */}
+      <audio ref={audioRef} className="hidden" />
 
       {/* Screen reader announcements */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">

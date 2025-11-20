@@ -12,6 +12,9 @@ const app = express();
 app.use(cors()); // allow frontend to call backend
 app.use(express.json()); // parse JSON requests
 
+// Serve uploaded files statically
+app.use('/uploads', express.static('uploads'));
+
 // Routes
 app.use("/api/auth", authRoutes);
 
