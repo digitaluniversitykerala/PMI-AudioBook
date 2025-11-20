@@ -16,7 +16,10 @@ export default defineConfig({
     host: true,
     origin: 'http://localhost:5173',
     headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
       'Content-Security-Policy': "default-src 'self'; " +
+        // Allow audio/video to be loaded from the backend API host
+        "media-src 'self' http://localhost:5000; " +
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.googleapis.com; " +
         "style-src 'self' 'unsafe-inline' https://*.google.com; " +
         "img-src 'self' data: https://*.google.com https://*.googleusercontent.com; " +
