@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { useAccessibility, speak } from "@/hooks/useAccessibility";
 import API from "@/api";
-import AdminUpload from "@/components/AdminUpload";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -40,6 +39,12 @@ const Dashboard = () => {
     try {
       const parsedUser = JSON.parse(userData);
       setUser(parsedUser);
+      
+      // Redirect admin users to admin dashboard
+      if (parsedUser.role === 'admin') {
+        navigate("/admindashboard");
+        return;
+      }
       
       // Fetch audiobooks from backend
       const fetchAudiobooks = async () => {
@@ -310,13 +315,7 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* Admin panel - only visible for admin users */}
-        {user?.role === "admin" && (
-          <div className="mb-10">
-            <h3 className="text-2xl font-semibold mb-4">Admin Panel: Upload Audiobooks</h3>
-            <AdminUpload />
-          </div>
-        )}
+        {/* No admin link - admins are automatically redirected to /admindashboard */}
 
         {/* Search bar */}
         <div className="mb-8">
