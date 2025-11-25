@@ -249,7 +249,7 @@ const Dashboard = () => {
               <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">
                 <span className="text-white font-bold" aria-label="PMI Logo">PMI</span>
               </div>
-              <h1 className="text-xl font-bold">PMI AudioBook Dashboard</h1>
+              <h1 className="text-xl font-bold">Dashboard</h1>
             </div>
 
             {/* User actions */}
