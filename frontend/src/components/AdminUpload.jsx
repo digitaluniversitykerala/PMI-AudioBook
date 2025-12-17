@@ -33,11 +33,7 @@ const AdminUpload = () => {
     formData.append(fileType === 'audio' ? 'audioFile' : 'coverImage', file);
 
     try {
-<<<<<<< Updated upstream
-      const response = await API.post(`/auth/upload/${fileType}`, formData, {
-=======
       const response = await API.post(`/admin/upload/${fileType === 'audio' ? 'audio' : 'image'}`, formData, {
->>>>>>> Stashed changes
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -87,16 +83,11 @@ const AdminUpload = () => {
         genres: bookData.genres.split(',').map(g => g.trim())
       };
 
-<<<<<<< Updated upstream
-      const response = await API.post('/auth/books', bookPayload);
-      setMessage('Book created successfully!');
-=======
       const response = await API.post('/admin/books', bookPayload);
       
       alert('Audiobook added successfully!');
       
       // Reset form
->>>>>>> Stashed changes
       setBookData({
         title: '',
         description: '',
