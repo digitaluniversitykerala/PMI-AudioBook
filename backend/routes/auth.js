@@ -93,9 +93,10 @@ router.post("/upload/cover", verifyToken, upload.single('coverImage'), uploadCov
 router.get("/files/:filename", serveFile);
 
 // Book routes
-router.get("/books", getBooks);
+// Book routes
 router.get("/books/featured", getFeaturedBooks);
 router.get("/books/new-releases", getNewReleases);
+router.get("/books", getBooks);
 router.get("/books/:id", getBookById);
 router.post("/books", verifyToken, createBook);
 router.put("/books/:id", verifyToken, updateBook);

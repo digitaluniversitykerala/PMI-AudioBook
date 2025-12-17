@@ -7,6 +7,7 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 
+
 // Helper function to generate access and refresh tokens
 const generateTokens = (userId, email) => {
   const accessToken = jwt.sign(
@@ -727,7 +728,7 @@ export const getNewReleases = async (req, res) => {
     const books = await Book.find({ isActive: true })
       .populate("authors", "name")
       .populate("genres", "name color")
-      .sort({ releaseDate: -1, createdAt: -1 })
+      .sort({ createdAt: -1 })
       .limit(limit);
     res.json(books);
   } catch (err) {

@@ -57,8 +57,8 @@ const authorSchema = new mongoose.Schema({
 const bookSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String },
-  authors: [{ type: mongoose.Schema.Types.ObjectId, ref: "Author" }],
-  genres: [{ type: mongoose.Schema.Types.ObjectId, ref: "Genre" }],
+  authors: [String],  // ← CHANGE THIS (was ObjectId)
+  genres: [String],   // ← CHANGE THIS (was ObjectId)
   narrator: { type: String },
   duration: { type: Number, default: 0 },
   audioFile: { type: String },
