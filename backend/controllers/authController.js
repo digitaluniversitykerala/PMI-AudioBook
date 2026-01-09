@@ -1,4 +1,5 @@
-import { User, Genre, Author, Book, UserProgress, Review, Playlist } from "../models/User.js"; // Imports all models
+import { User, Genre, Author, UserProgress, Review, Playlist } from "../models/User.js"; // Imports all models
+import Book from "../models/Book.js"; // Import Book model separately
 import bcrypt from "bcryptjs"; // Imports bcrypt for hashing passwords
 import jwt from "jsonwebtoken"; // Imports JWT for generating authentication tokens
 import crypto from "crypto"; // For generating secure random tokens

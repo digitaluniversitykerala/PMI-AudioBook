@@ -104,7 +104,6 @@ const playlistSchema = new mongoose.Schema({
 
 export const Genre = mongoose.model("Genre", genreSchema);
 export const Author = mongoose.model("Author", authorSchema);
-export const Book = mongoose.model("Book", bookSchema);
 export const UserProgress = mongoose.model("UserProgress", userProgressSchema);
 export const Review = mongoose.model("Review", reviewSchema);
 export const Playlist = mongoose.model("Playlist", playlistSchema);
