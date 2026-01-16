@@ -1,105 +1,98 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import logo from "@/assets/logo.jpg";
-import pmi from "@/assets/pmi.png";
+import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./Home.module.css";
-
-// Importin the Google login button and JWT decoder
-import { GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
+import { BookOpen, ArrowRight, ShieldCheck, Zap, Headphones } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAccessibility, speak } from "@/hooks/useAccessibility";
 
 const Home = () => {
-  // Handles successful Google login
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      const token = credentialResponse.credential; // Gets Google ID token
-      const userInfo = jwtDecode(token); // Decodes user info (name, email)
-      console.log("Google User:", userInfo);
+  const navigate = useNavigate();
+  const { announce } = useAccessibility();
 
-      // Sends token to backend to verify and get app JWT
-      const res = await fetch("http://localhost:5000/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
-
-      if (!res.ok) throw new Error("Failed to login with Google");
-      const data = await res.json();
-      console.log("Backend response:", data);
-
-      if (data.success) {
-        // Saves JWT to localStorage
-        localStorage.setItem("token", data.token);
-
-        // Redirects user to dashboard
-        window.location.href = "/dashboard";
-      } else {
-        alert("Google login fails on server");
-      }
-    } catch (err) {
-      console.error("Google login error:", err);
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/dashboard");
+    } else {
+      announce("Welcome to PMI AudioBook. The ultimate accessible reading platform. Sign in or sign up to get started.", "polite", true);
     }
-  };
-
-  // Handles Google login failure
-  const handleGoogleFailure = () => {
-    console.log("Google Login fails");
-    alert("Google login fails. Please try again.");
-  };
+  }, [navigate, announce]);
 
   return (
-    <div className={styles.homePage}>
-      {/* Shows top blue bar */}
-      <div className={`${styles.blueBox} ${styles.top}`}></div>
+    <div className="min-h-screen bg-slate-50 font-inter overflow-hidden relative">
+      {/* Background blobs for flair */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100 rounded-full blur-3xl opacity-50 animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-100 rounded-full blur-3xl opacity-50" />
 
-      <main className={styles.mainContent}>
-        {/* Left section displays PMI logo and welcome text */}
-        <div className={styles.leftSection}>
-          <div className={styles.pmiLogo}>
-            <img src={pmi} alt="PMI Logo" />
+      {/* Nav */}
+      <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-100">
+            <span className="text-white font-bold text-lg">PMI</span>
           </div>
-          <div className={styles.heroContent}>
-            <h1>Welcome to PMI Audiobook</h1>
-            <p>Provides a gateway to knowledge through audio learning</p>
-          </div>
+          <span className="text-xl font-black text-slate-800 tracking-tight">AudioBook</span>
+        </div>
+        <Link to="/login">
+          <Button variant="ghost" className="text-slate-600 font-semibold hover:text-blue-600">
+            Sign In
+          </Button>
+        </Link>
+      </nav>
+
+      {/* Hero */}
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-32 flex flex-col items-center text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded-full mb-8 border border-blue-100">
+          <Zap size={14} />
+          <span>ACCESSIBILITY FIRST PLATFORM</span>
         </div>
 
-        {/* Right section displays app logo and action buttons */}
-        <div className={styles.rightSection}>
-          <div className={styles.appLogo}>
-            <img src={logo} alt="App Logo" />
+        <h1 className="text-5xl md:text-7xl font-black text-slate-900 mb-6 tracking-tight leading-tight">
+          Knowledge is <span className="text-blue-600">better heard</span> than read.
+        </h1>
+        <p className="text-xl text-slate-500 max-w-2xl mb-10 leading-relaxed">
+          The ultimate accessible audiobook experience. High-quality narrations, inclusive design, and a vast library at your fingertips.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <Link to="/signup">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white h-14 px-8 text-lg font-bold shadow-xl shadow-blue-200 rounded-2xl group">
+              Start Listening Now
+              <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </Link>
+        </div>
+
+        {/* Features row */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-32 w-full max-w-5xl">
+          <div className="p-8 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+              <Headphones size={24} />
+            </div>
+            <h3 className="text-xl font-bold mb-3 text-slate-800">Premium Audio</h3>
+            <p className="text-slate-500 text-sm leading-relaxed">Studio-quality narration and seamless playback for the best listening experience.</p>
           </div>
-
-          <div className={styles.actionButtons}>
-            {/* Signup button navigates to signup page */}
-            <Link to="/signup" className={styles.signupButton}>
-              Get Started
-              <div className={styles.buttonGlow}></div>
-            </Link>
-
-            {/* Google login button triggers login flow */}
-            <div className={styles.googleButton}>
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleFailure}
-              />
+          <div className="p-8 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+              <ShieldCheck size={24} />
             </div>
-
-            {/* Divider and login link for existing users */}
-            <div className={styles.loginSection}>
-              <div className={styles.divider}>
-                <span>or</span>
-              </div>
-              <Link to="/login" className={styles.loginLink}>
-                Already have an account? <span>Log in</span>
-              </Link>
+            <h3 className="text-xl font-bold mb-3 text-slate-800">Inclusive Design</h3>
+            <p className="text-slate-500 text-sm leading-relaxed">Built from the ground up for accessibility with voice guidance and high contrast.</p>
+          </div>
+          <div className="p-8 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6">
+              <BookOpen size={24} />
             </div>
+            <h3 className="text-xl font-bold mb-3 text-slate-800">Vast Library</h3>
+            <p className="text-slate-500 text-sm leading-relaxed">Access thousands of titles across all genres, from bestsellers to independent works.</p>
           </div>
         </div>
       </main>
 
-      {/* Shows bottom blue bar */}
-      <div className={`${styles.blueBox} ${styles.bottom}`}></div>
+      <footer className="relative z-10 border-t border-slate-200 bg-white/50 py-10">
+        <div className="max-w-7xl mx-auto px-6 text-center text-slate-400 text-sm">
+          &copy; {new Date().getFullYear()} PMI AudioBook. All rights reserved.
+        </div>
+      </footer>
     </div>
   );
 };

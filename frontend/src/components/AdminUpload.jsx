@@ -1,24 +1,43 @@
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Upload, X } from "lucide-react";
+import React, { useState, useRef } from 'react';
+import { 
+  ArrowLeft, 
+  Music, 
+  BookOpen, 
+  Upload, 
+  Type, 
+  User as UserIcon, 
+  Tag, 
+  Clock, 
+  AlignLeft, 
+  Plus, 
+  Trash2,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  X
+} from "lucide-react";
 import API from '@/api';
+import styles from './AdminUpload.module.css';
 
 const AdminUpload = () => {
   const [bookData, setBookData] = useState({
     title: '',
     description: '',
-    duration: '',
     narrator: '',
     authors: '',
     genres: ''
   });
-  const [audioFile, setAudioFile] = useState(null);
+  
+  const [chapters, setChapters] = useState([
+    { title: '', duration: '', file: null, fileName: '' }
+  ]);
+  
   const [coverImage, setCoverImage] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState({ text: '', type: '' });
+  const [status, setStatus] = useState({ message: '', type: '' });
+
+  const fileInputRefs = useRef([]);
 
   const handleInputChange = (e) => {
     setBookData({
@@ -27,258 +46,347 @@ const AdminUpload = () => {
     });
   };
 
-  const handleAudioChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const validTypes = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/aac', 'audio/ogg'];
-      if (!validTypes.includes(file.type)) {
-        alert('Invalid file type. Please upload an audio file (MP3, WAV, AAC, or OGG).');
-        return;
-      }
-      if (file.size > 100 * 1024 * 1024) {
-        alert('File is too large. Maximum size is 100MB.');
-        return;
-      }
-      setAudioFile(file);
-      setMessage({ text: 'Audio file selected', type: 'success' });
+  const handleChapterChange = (index, field, value) => {
+    const newChapters = [...chapters];
+    newChapters[index][field] = value;
+    setChapters(newChapters);
+  };
+  
+  const handleChapterFileChange = (index, file) => {
+    if (!file) return;
+    const newChapters = [...chapters];
+    newChapters[index].file = file;
+    newChapters[index].fileName = file.name;
+    setChapters(newChapters);
+  };
+
+  const addChapter = () => {
+    setChapters([...chapters, { title: '', duration: '', file: null, fileName: '' }]);
+  };
+
+  const removeChapter = (index) => {
+    if (chapters.length > 1) {
+      const newChapters = chapters.filter((_, i) => i !== index);
+      setChapters(newChapters);
     }
   };
 
-  const handleImageChange = (e) => {
+  const handleCoverChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-      if (!validTypes.includes(file.type)) {
-        alert('Invalid file type. Please upload an image (JPEG, PNG, GIF, or WebP).');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image is too large. Maximum size is 5MB.');
-        return;
-      }
       setCoverImage(file);
-      setMessage({ text: 'Cover image selected', type: 'success' });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const handleFileUpload = async (fileType, file) => {
     const formData = new FormData();
     formData.append(fileType === 'audio' ? 'audioFile' : 'coverImage', file);
+    const endpoint = fileType === 'audio' ? '/auth/upload/audio' : '/auth/upload/cover';
 
     try {
-      const response = await API.post(`/api/admin/upload/${fileType === 'audio' ? 'audio' : 'image'}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      const response = await API.post(endpoint, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
-      console.log(`${fileType === 'audio' ? 'Audio' : 'Image'} uploaded successfully`);
-      
       return response.data.file.filename;
     } catch (error) {
-      const errorMsg = error.response?.data?.error || error.message || 'Failed to upload file';
-      alert(`Error uploading ${fileType}: ${errorMsg}`);
-      return null;
+      console.error("Upload failed", error);
+      throw error;
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploading(true);
-    setMessage({ text: '', type: '' });
+    setStatus({ message: '', type: '' });
 
-    // Validate required fields
-    if (!bookData.title || !bookData.duration || !audioFile) {
-      setMessage({ 
-        text: 'Please fill in all required fields (title, duration) and upload an audio file.', 
-        type: 'error' 
-      });
-      setUploading(false);
-      return;
+    if (!bookData.title || chapters.some(c => !c.title || !c.file)) {
+       setStatus({ message: 'Please fill all required fields and upload all files.', type: 'error' });
+       setUploading(false);
+       return;
     }
 
     try {
-      // Upload files first
-      let audioFileName = null;
-      let coverFileName = null;
-
-      if (audioFile) {
-        audioFileName = await handleFileUpload('audio', audioFile);
-        if (!audioFileName) {
-          setUploading(false);
-          return;
-        }
-      }
-
+      let coverFileName = undefined;
       if (coverImage) {
-        coverFileName = await handleFileUpload('image', coverImage);
-        // Don't fail if cover image upload fails, just continue without it
+          try {
+             coverFileName = await handleFileUpload('image', coverImage);
+          } catch(e) {
+              console.warn("Cover upload failed, proceeding without it");
+          }
       }
 
-      // Create book
+      const uploadedChapters = [];
+      for (let i = 0; i < chapters.length; i++) {
+          const chapter = chapters[i];
+          setStatus({ message: `Uploading chapter ${i + 1} of ${chapters.length}...`, type: 'info' });
+          
+          const audioPath = await handleFileUpload('audio', chapter.file);
+          uploadedChapters.push({
+              title: chapter.title,
+              duration: parseFloat(chapter.duration) || 0,
+              audioFile: audioPath
+          });
+      }
+
       const bookPayload = {
         title: bookData.title,
-        description: bookData.description || '',
-        duration: parseInt(bookData.duration, 10),
-        narrator: bookData.narrator || '',
-        authors: bookData.authors ? bookData.authors.split(',').map(a => a.trim()) : [],
-        genres: bookData.genres ? bookData.genres.split(',').map(g => g.trim()) : [],
-        audioFile: audioFileName,
-        coverImage: coverFileName || undefined
+        description: bookData.description,
+        narrator: bookData.narrator,
+        authors: bookData.authors.split(',').map(a => a.trim()).filter(Boolean),
+        genres: bookData.genres.split(',').map(g => g.trim()).filter(Boolean),
+        chapters: uploadedChapters,
+        coverImage: coverFileName,
+        duration: uploadedChapters.reduce((acc, c) => acc + c.duration, 0)
       };
 
-      const response = await API.post('/api/admin/books', bookPayload);
-      
-      alert('Audiobook added successfully!');
-      
-      // Reset form
-      setBookData({
-        title: '',
-        description: '',
-        duration: '',
-        narrator: '',
-        authors: '',
-        genres: ''
-      });
-      setAudioFile(null);
-      setCoverImage(null);
-      
-      // Clear file inputs
-      const audioUpload = document.getElementById('audio-upload');
-      const coverUpload = document.getElementById('cover-upload');
-      
-      if (audioUpload) audioUpload.value = '';
-      if (coverUpload) coverUpload.value = '';
-      
-      alert('Audiobook added successfully!');
-      setMessage({ 
-        text: 'Audiobook added successfully!', 
-        type: 'success' 
-      });
-    } catch (error) {
-      setMessage(`Error creating book: ${error.response?.data?.error || error.message}`);
-    }
+      await API.post('/books', bookPayload);
 
-    setUploading(false);
+      setStatus({ message: 'Audiobook published successfully!', type: 'success' });
+      setBookData({ title: '', description: '', narrator: '', authors: '', genres: '' });
+      setChapters([{ title: '', duration: '', file: null, fileName: '' }]);
+      setCoverImage(null);
+      setCoverPreview(null);
+
+    } catch (error) {
+      setStatus({ message: `Error: ${error.message || 'Server error'}`, type: 'error' });
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6">Upload Audiobook</h2>
-      
-      {message.text && (
-        <div className={`p-4 mb-4 rounded ${
-          message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-        }`}>
-          {message.text}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">Title</label>
-          <input
-            type="text"
-            name="title"
-            value={bookData.title}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Description</label>
-          <textarea
-            name="description"
-            value={bookData.description}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            rows="3"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
-          <input
-            type="number"
-            name="duration"
-            value={bookData.duration}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Narrator</label>
-          <input
-            type="text"
-            name="narrator"
-            value={bookData.narrator}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Authors (comma-separated)</label>
-          <input
-            type="text"
-            name="authors"
-            value={bookData.authors}
-            onChange={handleInputChange}
-            placeholder="Author 1, Author 2"
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Genres (comma-separated)</label>
-          <input
-            type="text"
-            name="genres"
-            value={bookData.genres}
-            onChange={handleInputChange}
-            placeholder="Fiction, Classic"
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Audio File (MP3)</label>
-          <input
-            type="file"
-            accept="audio/*"
-            onChange={handleAudioChange}
-            className="w-full p-2 border rounded"
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Please enter the duration (in minutes) manually above.
-          </p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Cover Image</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setCoverImage(e.target.files[0])}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={uploading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 disabled:bg-gray-400"
-        >
-          {uploading ? 'Uploading...' : 'Upload Audiobook'}
+    <div className={styles.pageContainer}>
+      <div className={styles.header}>
+        <button className={styles.backButton} aria-label="Go back">
+          <ArrowLeft size={20} />
         </button>
+        <div className={styles.headerText}>
+          <h1 className={styles.title}>Upload Audiobook</h1>
+          <p className={styles.subtitle}>Add a new audiobook to your library</p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className={styles.form}>
+        {/* Status Messages */}
+        {status.message && (
+          <div className={`${styles.statusMessage} ${styles[status.type]}`}>
+            {status.type === 'error' ? <AlertCircle size={20} /> : <CheckCircle2 size={20} />}
+            {status.message}
+          </div>
+        )}
+
+        {/* Audio Files Section */}
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <Music className={styles.sectionIcon} size={20} />
+            <h2 className={styles.sectionTitle}>Audio Chapters</h2>
+          </div>
+
+          <div className={styles.chaptersList}>
+            {chapters.map((chapter, index) => (
+              <div key={index} className={styles.chapterCard}>
+                <div className={styles.chapterHeader}>
+                   <span className={styles.chapterNumber}>#{index + 1}</span>
+                   {chapters.length > 1 && (
+                     <button type="button" onClick={() => removeChapter(index)} className={styles.removeChapter}>
+                       <Trash2 size={16} />
+                     </button>
+                   )}
+                </div>
+
+                <div className={styles.dropzone}>
+                  <Upload className={styles.uploadIcon} size={48} />
+                  <p className={styles.dropTitle}>
+                    {chapter.fileName ? chapter.fileName : "Drag and drop your audio file here"}
+                  </p>
+                  <p className={styles.dropSubtitle}>Supports MP3, M4A, WAV, and other audio formats</p>
+                  
+                  <button 
+                    type="button" 
+                    className={styles.browseButton}
+                    onClick={() => fileInputRefs.current[index].click()}
+                  >
+                    Browse Files
+                  </button>
+                  <input 
+                    type="file" 
+                    ref={el => fileInputRefs.current[index] = el}
+                    style={{display: 'none'}} 
+                    accept="audio/*,.mp3,.m4a,.wav,.aac,.ogg,.flac,.mpeg,.mp4"
+                    onChange={(e) => handleChapterFileChange(index, e.target.files[0])}
+                  />
+                </div>
+
+                <div className={styles.chapterDetails}>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Chapter Title</label>
+                    <div className={styles.inputWrapper}>
+                      <Type className={styles.fieldIcon} size={18} />
+                      <input 
+                        type="text" 
+                        placeholder="Enter chapter title"
+                        value={chapter.title}
+                        onChange={(e) => handleChapterChange(index, 'title', e.target.value)}
+                        className={styles.input}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.inputGroup}>
+                    <label className={styles.label}>Duration (m)</label>
+                    <div className={styles.inputWrapper}>
+                      <Clock className={styles.fieldIcon} size={18} />
+                      <input 
+                        type="number" 
+                        placeholder="e.g. 15"
+                        value={chapter.duration}
+                        onChange={(e) => handleChapterChange(index, 'duration', e.target.value)}
+                        className={styles.input}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+            
+            <button type="button" onClick={addChapter} className={styles.addChapterButton}>
+              <Plus size={18} /> Add Another Chapter
+            </button>
+          </div>
+        </section>
+
+        {/* Book Details Section */}
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <BookOpen className={styles.sectionIcon} size={20} />
+            <h2 className={styles.sectionTitle}>Book Details</h2>
+          </div>
+
+          <div className={styles.detailsGrid}>
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Title</label>
+              <div className={styles.inputWrapper}>
+                <Type className={styles.fieldIcon} size={18} />
+                <input 
+                  type="text" 
+                  name="title"
+                  placeholder="Enter book title"
+                  value={bookData.title}
+                  onChange={handleInputChange}
+                  className={styles.input}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Author</label>
+              <div className={styles.inputWrapper}>
+                <UserIcon className={styles.fieldIcon} size={18} />
+                <input 
+                  type="text" 
+                  name="authors"
+                  placeholder="Enter author name"
+                  value={bookData.authors}
+                  onChange={handleInputChange}
+                  className={styles.input}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Category / Genres</label>
+              <div className={styles.inputWrapper}>
+                <Tag className={styles.fieldIcon} size={18} />
+                <input 
+                  type="text" 
+                  name="genres"
+                  placeholder="Fiction, Mystery"
+                  value={bookData.genres}
+                  onChange={handleInputChange}
+                  className={styles.input}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>Narrator</label>
+              <div className={styles.inputWrapper}>
+                <UserIcon className={styles.fieldIcon} size={18} />
+                <input 
+                  type="text" 
+                  name="narrator"
+                  placeholder="Enter narrator name"
+                  value={bookData.narrator}
+                  onChange={handleInputChange}
+                  className={styles.input}
+                />
+              </div>
+            </div>
+
+            <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+              <label className={styles.label}>Description</label>
+              <div className={`${styles.inputWrapper} ${styles.textareaWrapper}`}>
+                <AlignLeft className={styles.fieldIcon} size={18} />
+                <textarea 
+                  name="description"
+                  placeholder="Write a brief description of the audiobook..."
+                  value={bookData.description}
+                  onChange={handleInputChange}
+                  className={styles.textarea}
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <div className={`${styles.inputGroup} ${styles.fullWidth}`}>
+              <label className={styles.label}>Cover Image</label>
+              <div className={styles.coverUploadContainer}>
+                {coverPreview ? (
+                  <div className={styles.coverPreviewWrapper}>
+                    <img src={coverPreview} alt="Cover preview" className={styles.coverPreview} />
+                    <button type="button" className={styles.removeCover} onClick={() => {setCoverImage(null); setCoverPreview(null);}}>
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className={styles.coverPlaceholder} onClick={() => document.getElementById('coverInput').click()}>
+                    <Upload size={24} />
+                    <span>Upload Cover</span>
+                  </div>
+                )}
+                <input 
+                  id="coverInput"
+                  type="file" 
+                  accept="image/*" 
+                  style={{display: 'none'}} 
+                  onChange={handleCoverChange} 
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer Actions */}
+        <div className={styles.footer}>
+          <button type="submit" className={styles.publishButton} disabled={uploading}>
+            {uploading ? (
+              <><Loader2 className={styles.spinner} size={18} /> Processing...</>
+            ) : (
+              <><Upload size={18} /> Publish Audiobook</>
+            )}
+          </button>
+          <button type="button" className={styles.cancelButton} onClick={() => window.history.back()}>
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
   );

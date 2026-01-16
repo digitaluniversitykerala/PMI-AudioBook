@@ -1,0 +1,448 @@
+.pageWrapper {
+    min-height: 100vh;
+    background-color: #f1f7fc;
+    color: #1e293b;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+.topBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.iconBtn {
+    background: transparent;
+    border: none;
+    color: #475569;
+    padding: 0.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.iconBtn:focus {
+    outline: 2px solid #0076bb;
+    outline-offset: 2px;
+    background: rgba(0, 118, 187, 0.1);
+}
+
+.iconBtn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #0f172a;
+}
+
+.actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.mainContent {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1rem 2rem 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.coverContainer {
+    width: 160px;
+    height: 160px;
+    background: #e0eef9;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.coverImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.bookIcon {
+    color: #0076bb;
+}
+
+.title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 0.5rem 0;
+}
+
+.author {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #475569;
+    font-size: 1.125rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+}
+
+.badges {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
+
+.badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 100px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.genreBadge {
+    background: #1e293b;
+    color: #f8fafc;
+}
+
+.durationBadge {
+    color: #475569;
+}
+
+/* Player Card */
+.playerCard {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+    margin-bottom: 2rem;
+    border: 1px solid #e2e8f0;
+}
+
+.progressSection {
+    margin-bottom: 2rem;
+}
+
+.progressBar {
+    width: 100%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 100px;
+    appearance: none;
+    cursor: pointer;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.progressBar::-webkit-slider-runnable-track {
+    background: #e2e8f0;
+}
+
+.progressBar::-webkit-slider-thumb {
+    appearance: none;
+    width: 0;
+    box-shadow: -100vw 0 0 100vw #0076bb;
+}
+
+.timeInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #64748b;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.currentChapter {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.playBtn {
+    width: 80px;
+    height: 80px;
+    background: #0076bb;
+    color: #ffffff;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+    box-shadow: 0 10px 15px -3px rgba(0, 118, 187, 0.3);
+}
+
+.playBtn:focus {
+    outline: 3px solid #0076bb;
+    outline-offset: 4px;
+}
+
+.playBtn:hover {
+    background: #0064a0;
+    transform: scale(1.05);
+}
+
+.secondaryControl {
+    background: transparent;
+    border: none;
+    color: #1e293b;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.secondaryControl:focus:not(:disabled) {
+    outline: 2px solid #1e293b;
+    outline-offset: 2px;
+}
+
+.secondaryControl:hover:not(:disabled) {
+    background: #f1f5f9;
+}
+
+.secondaryControl:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.playerFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footerActions {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.speedBtn {
+    background: #1e293b;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 0 0.75rem;
+    height: 36px;
+    min-width: 50px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.speedBtn:focus {
+    outline: 2px solid #1e293b;
+    outline-offset: 2px;
+}
+
+.speedBtn:hover {
+    background: #334155;
+}
+
+.speedBtn:active {
+    transform: scale(0.95);
+}
+
+.volumeControl {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 140px;
+    max-width: 100%;
+}
+
+.volumeSlider {
+    flex: 1;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 100px;
+    appearance: none;
+}
+
+.volumeSlider::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #ffffff;
+    border: 2px solid #0076bb;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.chaptersDropdown {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #1e293b;
+    color: #ffffff;
+    border: none;
+    padding: 0.625rem 1.25rem;
+    border-radius: 100px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.chaptersDropdown:focus {
+    outline: 2px solid #1e293b;
+    outline-offset: 2px;
+}
+
+/* About Section */
+.aboutCard {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 2rem;
+    text-align: left;
+    border: 1px solid #e2e8f0;
+}
+
+.aboutHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    color: #0076bb;
+    font-weight: 700;
+    font-size: 1.125rem;
+}
+
+.description {
+    color: #475569;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Chapters Popover Style (Simulated) */
+.popover {
+    position: fixed;
+    bottom: 100px;
+    right: 50px;
+    background: white;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.1);
+    border-radius: 16px;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 100;
+    border: 1px solid #e2e8f0;
+}
+
+.chapterItem {
+    width: 100%;
+    text-align: left;
+    padding: 1rem;
+    background: none;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    cursor: pointer;
+    font-size: 0.875rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.chapterItem:hover {
+    background: #f8fafc;
+}
+
+.chapterItem:focus {
+    outline: 2px solid #0076bb;
+    outline-offset: -2px;
+    background: #f0f9ff;
+    z-index: 1;
+}
+
+.activeChapterItem {
+    background: #f0f9ff;
+    color: #0076bb;
+    font-weight: 700;
+}
+
+/* Responsive Styles */
+@media (max-width: 640px) {
+    .topBar {
+        padding: 1rem;
+    }
+
+    .mainContent {
+        padding: 0 1rem 2rem;
+    }
+
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .playerCard {
+        padding: 1.5rem 1rem;
+    }
+
+    .controls {
+        gap: 1rem;
+    }
+
+    .playBtn {
+        width: 64px;
+        height: 64px;
+    }
+
+    .playBtn svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .playerFooter {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .footerActions {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .volumeControl {
+        width: 120px;
+    }
+
+    .chaptersDropdown {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .popover {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        max-height: 60vh;
+        border-radius: 20px 20px 0 0;
+        position: fixed;
+    }
+}

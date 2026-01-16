@@ -73,6 +73,7 @@ const bookSchema = new mongoose.Schema({
 const userProgressSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   book: { type: mongoose.Schema.Types.ObjectId, ref: "Book", required: true },
+  currentChapter: { type: Number, default: 0 }, // Index of the chapter
   currentPosition: { type: Number, default: 0 },
   totalPlayed: { type: Number, default: 0 },
   playbackSpeed: { type: Number, default: 1.0 },

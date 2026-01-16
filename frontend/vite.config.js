@@ -17,15 +17,12 @@ export default defineConfig({
     origin: 'http://localhost:5173',
     headers: {
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-      'Content-Security-Policy': "default-src 'self'; " +
-        // Allow audio/video to be loaded from the backend API host
-        "media-src 'self' http://localhost:5000; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.google.com https://*.googleapis.com; " +
-        "style-src 'self' 'unsafe-inline' https://*.google.com; " +
-        "img-src 'self' data: https://*.google.com https://*.googleusercontent.com; " +
-        "connect-src 'self' ws://localhost:5173 http://localhost:5000 https://*.google.com https://*.googleapis.com https://accounts.google.com http://localhost:*; " +
-        "frame-src 'self' https://accounts.google.com;" +
-        "worker-src 'self' blob:;"
+      'Content-Security-Policy': "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; " +
+        "script-src * 'unsafe-inline' 'unsafe-eval'; " +
+        "connect-src * 'unsafe-inline'; " +
+        "img-src * data: blob:; " +
+        "frame-src *; " +
+        "style-src * 'unsafe-inline';"
     },
     proxy: {
       '/api': {
@@ -35,6 +32,11 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, '')
       },
       '/auth': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false
+      },
+      '/uploads': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false

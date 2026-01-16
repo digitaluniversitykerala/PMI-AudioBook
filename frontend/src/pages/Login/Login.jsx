@@ -16,15 +16,12 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
   
   const {
     highContrast,
-    largeText,
-    screenReaderMode,
+    voiceEnabled,
     toggleHighContrast,
-    toggleLargeText,
-    toggleScreenReaderMode,
+    toggleVoiceEnabled,
     announce
   } = useAccessibility();
 
@@ -153,7 +150,7 @@ const Login = () => {
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-inter">
       {/* Skip to main content link for screen readers */}
       <a href="#login-form" className="sr-only-focusable">
         Skip to login form
@@ -162,43 +159,34 @@ const Login = () => {
       {/* Accessibility controls */}
       <div className="fixed top-4 right-4 flex gap-2 z-50">
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
-          onClick={() => setVoiceEnabled(!voiceEnabled)}
+          onClick={toggleVoiceEnabled}
+          className={`transition-colors ${voiceEnabled ? "text-blue-600 bg-blue-50" : "text-slate-500 hover:text-blue-600"}`}
           aria-label={voiceEnabled ? "Disable voice feedback" : "Enable voice feedback"}
-          title={voiceEnabled ? "Disable voice feedback" : "Enable voice feedback"}
         >
           {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
         </Button>
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
           onClick={toggleHighContrast}
-          aria-label={highContrast ? "Disable high contrast" : "Enable high contrast"}
-          title={highContrast ? "Disable high contrast" : "Enable high contrast"}
+          className="text-slate-500 hover:text-blue-600"
+          aria-label="Toggle high contrast"
         >
           <Contrast className="h-4 w-4" />
         </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleLargeText}
-          aria-label={largeText ? "Disable large text" : "Enable large text"}
-          title={largeText ? "Disable large text" : "Enable large text"}
-        >
-          <Type className="h-4 w-4" />
-        </Button>
       </div>
 
-      <Card className="w-full max-w-md animate-slide-in" id="login-form">
-        <CardHeader className="text-center">
+      <Card className="w-full max-w-md shadow-xl border-slate-200 animate-in fade-in slide-in-from-bottom-4 duration-500" id="login-form">
+        <CardHeader className="text-center pb-2">
           {/* PMI Logo */}
-          <div className="mx-auto mb-4 w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-white text-3xl font-bold" aria-label="PMI Logo">PMI</span>
+          <div className="mx-auto mb-6 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-200">
+            <span className="text-white text-2xl font-bold" aria-label="PMI Logo">PMI</span>
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome to PMI AudioBook</CardTitle>
-          <CardDescription>
-            Accessible audiobooks for everyone
+          <CardTitle className="text-2xl font-bold text-slate-800">Welcome Back</CardTitle>
+          <CardDescription className="text-slate-500">
+            Sign in to continue your reading journey
           </CardDescription>
         </CardHeader>
 
@@ -216,7 +204,7 @@ const Login = () => {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">
+              <Label htmlFor="email" className="block mb-1.5 font-semibold text-slate-700">
                 Email address
                 <span className="sr-only">Required field</span>
               </Label>
@@ -237,7 +225,7 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">
+              <Label htmlFor="password" className="block mb-1.5 font-semibold text-slate-700">
                 Password
                 <span className="sr-only">Required field</span>
               </Label>
@@ -282,16 +270,13 @@ const Login = () => {
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100 h-11"
               disabled={loading}
               aria-busy={loading}
               onFocus={() => voiceEnabled && speak("Login button. Press Enter to sign in.")}
             >
               {loading ? (
-                <>
-                  <span className="animate-pulse">Signing in...</span>
-                  <span className="sr-only">Please wait, signing you in</span>
-                </>
+                <span className="animate-pulse">Signing in...</span>
               ) : (
                 <>
                   <LogIn className="mr-2 h-4 w-4" />
@@ -300,22 +285,21 @@ const Login = () => {
               )}
             </Button>
 
-            <div className="relative">
+            <div className="relative py-2">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t border-slate-200" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                <span className="bg-white px-2 text-slate-400">Or continue with</span>
               </div>
             </div>
 
             <Button
               type="button"
               variant="outline"
-              className="w-full"
+              className="w-full border-slate-200 h-11 hover:bg-slate-50 transition-colors"
               onClick={() => googleLogin()}
               disabled={loading}
-              onFocus={() => voiceEnabled && speak("Sign in with Google button")}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path

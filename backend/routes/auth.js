@@ -1,11 +1,8 @@
 import express from "express";
-import { 
-  signup, login, forgotPassword, resetPassword, refreshToken, logout,
-  getBooks, getBookById, createBook, updateBook, deleteBook, getFeaturedBooks, getNewReleases,
-  getUserProgress, updateUserProgress, getUserLibrary, getUserStats, getRecommendations,
-  upload, uploadAudio, uploadCover, serveFile
-} from "../controllers/authController.js";
+import { signup, login, forgotPassword, resetPassword, refreshToken, logout } from "../controllers/authController.js";
+import { uploadAudio, uploadCover } from "../controllers/uploadController.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { upload } from "../middleware/upload.js";
 import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
@@ -13,45 +10,45 @@ import bcrypt from "bcryptjs";
 
 const router = express.Router();
 
-// Google OAuth setup
+// Google OAuth setup (Keeping inline for now as it uses specific libs, can be refactored later)
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
-// Google login
-router.post("/google", async (req, res) => {
+router.post("/google", async (req, res, next) => {
   try {
     const { token } = req.body;
-    
-    if (!token) {
-      return res.status(400).json({ error: 'No token provided' });
-    }
+    if (!token) return res.status(400).json({ error: 'No token provided' });
 
     let payload;
-    
     try {
       const ticket = await client.verifyIdToken({
         idToken: token,
-        audience: process.env.GOOGLE_CLIENT_ID,
+        audience: GOOGLE_CLIENT_ID,
       });
       payload = ticket.getPayload();
     } catch (idTokenError) {
       try {
+        // Fallback: Try using it as an access token
         const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch user info from Google');
+          throw new Error(`Failed to fetch user info from Google: ${response.statusText}`);
         }
         payload = await response.json();
       } catch (accessTokenError) {
-        return res.status(401).json({ error: 'Invalid token' });
+        console.error("Google Auth failed. ID Token error:", idTokenError.message);
+        console.error("Access Token error:", accessTokenError.message);
+        return res.status(401).json({ 
+            error: 'Invalid token', 
+            details: 'Failed to verify as both ID Token and Access Token',
+            idTokenError: idTokenError.message,
+            accessTokenError: accessTokenError.message
+        });
       }
     }
 
-    if (!payload.email) {
-      return res.status(400).json({ error: 'No email found in Google profile' });
-    }
+    if (!payload.email) return res.status(400).json({ error: 'No email found in Google profile' });
 
     let user = await User.findOne({ email: payload.email });
-
     if (!user) {
       const hashedDummy = await bcrypt.hash("google-oauth", 10);
       user = await User.create({
@@ -74,12 +71,11 @@ router.post("/google", async (req, res) => {
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
     });
   } catch (err) {
-    console.error(err);
-    res.status(401).json({ success: false, message: "Google login failed" });
+    next(err);
   }
 });
 
-// Auth routes
+// Auth Routes
 router.post("/signup", signup);
 router.post("/login", login);
 router.post("/forgot-password", forgotPassword);
@@ -90,24 +86,5 @@ router.post("/logout", logout);
 // File upload routes
 router.post("/upload/audio", verifyToken, upload.single('audioFile'), uploadAudio);
 router.post("/upload/cover", verifyToken, upload.single('coverImage'), uploadCover);
-router.get("/files/:filename", serveFile);
-
-// Book routes
-router.get("/books", getBooks);
-router.get("/books/featured", getFeaturedBooks);
-router.get("/books/new-releases", getNewReleases);
-router.get("/books/:id", getBookById);
-router.post("/books", verifyToken, createBook);
-router.put("/books/:id", verifyToken, updateBook);
-router.delete("/books/:id", verifyToken, deleteBook);
-
-// User progress routes
-router.get("/progress/:bookId", verifyToken, getUserProgress);
-router.put("/progress/:bookId", verifyToken, updateUserProgress);
-
-// User dashboard routes
-router.get("/user/library", verifyToken, getUserLibrary);
-router.get("/user/stats", verifyToken, getUserStats);
-router.get("/user/recommendations", verifyToken, getRecommendations);
 
 export default router;

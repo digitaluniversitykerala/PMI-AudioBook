@@ -1,30 +1,73 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookOpen, LogOut, Volume2, VolumeX, Contrast, Type, Search, Play, Pause, User } from "lucide-react";
+import { BookOpen, LogOut, Volume2, VolumeX, Contrast, Type, Search, Play, Pause, User, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { useAccessibility, speak } from "@/hooks/useAccessibility";
-import API from "@/api";
+import API, { BASE_URL } from "@/api";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [audiobooks, setAudiobooks] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
-  const [playback, setPlayback] = useState({ currentTime: 0, duration: 0 });
+  const searchInputRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [currentlyPlaying, setCurrentlyPlaying] = useState(null);
 
   const {
     highContrast,
-    largeText,
+    voiceEnabled,
     toggleHighContrast,
-    toggleLargeText,
+    toggleVoiceEnabled,
     announce
   } = useAccessibility();
+
+  useEffect(() => {
+    const handleGlobalKeys = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        if (e.key === 'Escape') e.target.blur();
+        return;
+      }
+
+      if (e.key === '/') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        if (voiceEnabled) speak("Search audiobooks");
+      }
+
+      if (e.key === ' ') {
+        e.preventDefault();
+        if (currentlyPlaying) {
+          togglePlay();
+          announce(isPlaying ? "Paused" : "Playing", "assertive", true);
+        } else {
+          announce("No audiobook selected. Tab to a book and press Enter to start.", "polite", true);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeys);
+    return () => window.removeEventListener('keydown', handleGlobalKeys);
+  }, [currentlyPlaying, voiceEnabled, isPlaying]);
+
+  useEffect(() => {
+    announce("Dashboard. Explore our collection of audiobooks.", "polite", true);
+  }, [announce]);
+
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
 
   useEffect(() => {
     // Check authentication
@@ -40,16 +83,12 @@ const Dashboard = () => {
       const parsedUser = JSON.parse(userData);
       setUser(parsedUser);
       
-      // Redirect admin users to admin dashboard
-      if (parsedUser.role === 'admin') {
-        navigate("/admindashboard");
-        return;
-      }
+      // Removed automatic admin redirect - everyone goes to main dashboard first
       
       // Fetch audiobooks from backend
       const fetchAudiobooks = async () => {
         try {
-          const response = await API.get('/auth/books');
+          const response = await API.get('/books');
           const books = response.data.books || response.data || [];
           
           // Transform data if needed to match frontend structure
@@ -229,75 +268,86 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-gray-900 dark:to-gray-800">
-        <div className="text-center">
-          <div className="animate-pulse text-2xl font-bold">Loading your audiobooks...</div>
-          <span className="sr-only">Loading dashboard content</span>
+      <div className="flex items-center justify-center min-h-screen bg-slate-50" aria-busy="true">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <span className="text-slate-600 font-medium">Preparing your library...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-slate-50 text-slate-900">
       {/* Skip to main content */}
       <a href="#main-content" className="sr-only-focusable">
         Skip to audiobooks
       </a>
 
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
+      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo and title */}
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold" aria-label="PMI Logo">PMI</span>
+          <div className="flex justify-between h-16 items-center">
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-100">
+                <span className="text-white font-bold text-lg">PMI</span>
               </div>
-              <h1 className="text-xl font-bold">PMI AudioBook Dashboard</h1>
+              <h1 className="text-xl font-extrabold text-slate-800 tracking-tight hidden sm:block">AudioBook</h1>
             </div>
 
-            {/* User actions */}
-            <div className="flex items-center space-x-2">
-              {/* Accessibility controls */}
+            <div className="flex items-center gap-1 sm:gap-3">
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setVoiceEnabled(!voiceEnabled)}
-                aria-label={voiceEnabled ? "Disable voice" : "Enable voice"}
+                onClick={toggleVoiceEnabled}
+                className={`transition-colors ${voiceEnabled ? "text-blue-600 bg-blue-50 font-bold" : "text-slate-500 hover:text-blue-600"}`}
+                aria-label={voiceEnabled ? "Disable voice feedback" : "Enable voice feedback"}
+                title={voiceEnabled ? "Disable voice" : "Enable voice"}
+                onFocus={() => voiceEnabled && speak(voiceEnabled ? "Disable voice feedback" : "Enable voice feedback")}
               >
-                {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                {voiceEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
               </Button>
+              
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleHighContrast}
+                className={`transition-colors ${highContrast ? "text-blue-600 bg-blue-50" : "text-slate-500 hover:text-blue-600"}`}
                 aria-label="Toggle high contrast"
+                onFocus={() => voiceEnabled && speak("Toggle high contrast")}
               >
-                <Contrast className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleLargeText}
-                aria-label="Toggle large text"
-              >
-                <Type className="h-4 w-4" />
+                <Contrast className="h-5 w-5" />
               </Button>
 
-              {/* User menu */}
-              <div className="flex items-center space-x-2 ml-4 pl-4 border-l">
-                <User className="h-5 w-5" />
-                <span className="text-sm font-medium">{user?.name}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleLogout}
-                  aria-label="Logout"
-                  onFocus={() => voiceEnabled && speak("Logout button")}
+              {user?.role === 'admin' && (
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => navigate('/admindashboard')}
+                  className="text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+                  title="Admin Upload"
+                  onFocus={() => voiceEnabled && speak("Admin upload dashboard")}
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
+                  <Upload className="h-5 w-5" />
+                </Button>
+              )}
+              
+              <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
+              
+              <div className="flex items-center gap-2 ml-2">
+                <div className="hidden sm:flex flex-col items-end">
+                  <span className="text-xs font-semibold text-slate-900 leading-none">{user?.name}</span>
+                  <span className="text-[10px] text-slate-400 capitalize">{user?.role}</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  className="text-slate-600 hover:text-red-500 hover:bg-red-50 p-2"
+                  onClick={handleLogout}
+                  title="Logout"
+                  onFocus={() => voiceEnabled && speak("Logout")}
+                >
+                  <LogOut className="h-5 w-5" />
                 </Button>
               </div>
             </div>
@@ -306,120 +356,105 @@ const Dashboard = () => {
       </header>
 
       {/* Main content */}
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Welcome section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Welcome back, {user?.name}!</h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            Explore our collection of accessible audiobooks designed for everyone.
+        <div className="mb-10">
+          <h2 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">
+            Hi, {user?.name?.split(' ')[0]} 👋
+          </h2>
+          <p className="text-lg text-slate-500 max-w-2xl">
+            Pick up where you left off or explore something new in our collection.
           </p>
         </div>
-
-        {/* No admin link - admins are automatically redirected to /admindashboard */}
 
         {/* Search bar */}
         <div className="mb-8">
           <div className="relative max-w-xl">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
             <Input
+              ref={searchInputRef}
               type="search"
-              placeholder="Search audiobooks by title, author, or category..."
+              placeholder="Search by title or author... (Press / to focus)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 enhanced-focus"
+              className="pl-10 h-12 bg-white border-slate-200 rounded-xl focus:ring-blue-600 transition-all text-lg"
               aria-label="Search audiobooks"
-              onFocus={() => voiceEnabled && speak("Search audiobooks. Type to filter the collection.")}
             />
           </div>
         </div>
 
         {/* Audiobooks grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
+          role="list" 
+          aria-label="Audiobook collection"
+        >
           {filteredAudiobooks.map((audiobook) => (
             <Card 
               key={audiobook.id} 
-              className="hover:shadow-lg transition-shadow duration-200"
-              role="article"
-              aria-label={`Audiobook: ${audiobook.title}`}
+              tabIndex={0}
+              className="hover:shadow-xl transition-all duration-300 cursor-pointer border-slate-200 group overflow-hidden focus:ring-2 focus:ring-blue-600 focus:outline-none"
+              role="listitem"
+              aria-label={`Audiobook: ${audiobook.title} by ${audiobook.author}. Category: ${audiobook.category}. Duration: ${audiobook.duration}. Click or press Enter to listen.`}
+              onClick={() => navigate(`/book/${audiobook.id}`)}
+              onKeyDown={(e) => e.key === 'Enter' && navigate(`/book/${audiobook.id}`)}
+              onFocus={() => voiceEnabled && speak(`${audiobook.title} by ${audiobook.author}`)}
             >
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <BookOpen className="h-8 w-8 text-indigo-600" aria-hidden="true" />
-                  {currentlyPlaying === audiobook.id ? (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={handlePauseAudiobook}
-                      aria-label={`Pause ${audiobook.title}`}
-                      onFocus={() => voiceEnabled && speak(`Pause ${audiobook.title}`)}
-                    >
-                      <Pause className="h-4 w-4 mr-1" />
-                      Pause
-                    </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="default"
-                      onClick={() => handlePlayAudiobook(audiobook)}
-                      aria-label={`Play ${audiobook.title}`}
-                      onFocus={() => voiceEnabled && speak(`Play ${audiobook.title} by ${audiobook.author}`)}
-                    >
-                      <Play className="h-4 w-4 mr-1" />
-                      Play
-                    </Button>
-                  )}
+              <div className="aspect-[4/3] relative overflow-hidden bg-slate-100">
+                {audiobook.coverImage ? (
+                  <img 
+                    src={audiobook.coverImage} 
+                    alt="" 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-blue-50">
+                    <BookOpen size={48} className="text-blue-200" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors" />
+                <div className="absolute bottom-4 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transform translate-y-2 group-hover:translate-y-0 transition-all">
+                  <Play size={20} fill="currentColor" />
                 </div>
-                <CardTitle className="mt-4">{audiobook.title}</CardTitle>
+              </div>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-bold text-slate-800 line-clamp-1 group-hover:text-blue-600 transition-colors">{audiobook.title}</CardTitle>
                 <CardDescription>
                   <span className="block">By {audiobook.author}</span>
-                  <span className="block text-sm mt-1">
-                    {audiobook.category} • {audiobook.duration}
-                  </span>
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-slate-500 line-clamp-2 mb-4">
                   {audiobook.description}
                 </p>
-                {currentlyPlaying === audiobook.id && (
-                  <div className="mt-4 p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-md">
-                    <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
-                      Now Playing...
-                    </span>
-                    <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-indigo-600 transition-all duration-150"
-                        style={{
-                          width: playback.duration > 0
-                            ? `${Math.min(100, (playback.currentTime / playback.duration) * 100)}%`
-                            : "0%",
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                )}
+                <div className="flex items-center text-xs font-semibold text-slate-400 gap-3">
+                  <span className="bg-slate-50 px-2 py-1 rounded text-blue-600">{audiobook.category}</span>
+                  <span>{audiobook.duration}</span>
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
         {filteredAudiobooks.length === 0 && (
-          <div className="text-center py-12">
-            <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">
-              No audiobooks found matching your search.
-            </p>
+          <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+            <BookOpen className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-slate-800">No books found</h3>
+            <p className="text-slate-500">Try adjusting your search terms.</p>
           </div>
         )}
 
         {/* Keyboard shortcuts help */}
-        <div className="mt-12 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-          <h3 className="font-semibold mb-2">Keyboard Shortcuts</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <div><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded">Tab</kbd> Navigate between elements</div>
-            <div><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded">Enter</kbd> Activate buttons</div>
-            <div><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded">Space</kbd> Play/Pause audiobook</div>
-            <div><kbd className="px-2 py-1 bg-white dark:bg-gray-700 rounded">/</kbd> Focus search bar</div>
+        <div className="mt-16 p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
+          <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <Type className="h-5 w-5 text-blue-600" />
+            Keyboard Shortcuts
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="bg-white p-3 rounded-xl shadow-sm"><kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-xs">Tab</kbd> Navigate items</div>
+            <div className="bg-white p-3 rounded-xl shadow-sm"><kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-xs">Enter</kbd> Open selected book</div>
+            <div className="bg-white p-3 rounded-xl shadow-sm"><kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-xs">Space</kbd> Play/Pause last book</div>
+            <div className="bg-white p-3 rounded-xl shadow-sm"><kbd className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 rounded text-xs">/</kbd> Focus search</div>
           </div>
         </div>
       </main>

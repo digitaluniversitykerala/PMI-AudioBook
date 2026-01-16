@@ -17,8 +17,17 @@ const bookSchema = new mongoose.Schema(
     ],
     narrator: { type: String },
     duration: { type: Number, default: 0 },
-    audioFile: { type: String },
     coverImage: { type: String },
+    chapters: [
+      {
+        title: { type: String, required: true },
+        audioFile: { type: String, required: true },
+        duration: { type: Number, default: 0 }
+      }
+    ],
+    // Legacy support for single-file books (optional but good for migration)
+    audioFile: { type: String },
+    
     rating: { type: Number, default: 0 },
     totalPlays: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },

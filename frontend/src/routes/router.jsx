@@ -4,6 +4,7 @@ import Login from "../pages/Login/Login";
 import Signup from "../pages/Signup/Signup";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import AdminDashboard from "../pages/Admin";
+import SingleAudioBook from "../pages/SingleAudioBook/SingleAudioBook";
 
 const router = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
   {
     path: "/admindashboard",
     element: <AdminDashboard />,
+  },
+  {
+    path: "/book/:id",
+    element: <SingleAudioBook />,
   },
   // Redirect any unknown paths to home
   {

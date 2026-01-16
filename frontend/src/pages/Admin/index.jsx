@@ -1,8 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Volume2, VolumeX, Contrast, Type } from "lucide-react";
+import { 
+  LogOut, 
+  Volume2, 
+  VolumeX, 
+  Contrast, 
+  Type, 
+  ArrowLeft,
+  LayoutDashboard
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAccessibility } from "@/hooks/useAccessibility";
+import { useAccessibility, speak } from "@/hooks/useAccessibility";
 import AdminUpload from "@/components/AdminUpload";
 import API from "@/api";
 
@@ -12,28 +20,11 @@ const AdminDashboard = () => {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Initialize with safe defaults
-  const [accessibility, setAccessibility] = useState({
-    highContrast: false,
-    largeText: false,
-    speak: null,
-    announce: () => {}
-  });
-
-  // Load accessibility features in a separate effect
-  useEffect(() => {
-    try {
-      const acc = useAccessibility?.() || {};
-      setAccessibility({
-        highContrast: acc.highContrast || false,
-        largeText: acc.largeText || false,
-        speak: acc.speak || null,
-        announce: acc.announce || (() => {})
-      });
-    } catch (error) {
-      console.error("Error loading accessibility features:", error);
-    }
-  }, []);
+  const {
+    toggleHighContrast,
+    toggleLargeText,
+    announce
+  } = useAccessibility();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -54,13 +45,8 @@ const AdminDashboard = () => {
         }
         setUser(parsedUser);
         
-        // Safe speak with error handling
-        if (voiceEnabled && typeof accessibility.speak === 'function') {
-          try {
-            accessibility.speak(`Welcome to the admin dashboard, ${parsedUser.name}.`);
-          } catch (e) {
-            console.error("Error with speech synthesis:", e);
-          }
+        if (voiceEnabled) {
+          speak(`Admin Portal active. Welcome, ${parsedUser.name}.`);
         }
       } catch (error) {
         console.error("Error parsing user data:", error);
@@ -71,7 +57,7 @@ const AdminDashboard = () => {
     };
 
     checkAuth();
-  }, [navigate, voiceEnabled, accessibility.speak]);
+  }, [navigate]);
 
   const handleLogout = async () => {
     try {
@@ -81,111 +67,84 @@ const AdminDashboard = () => {
       console.error("Logout error:", error);
     }
     
-    // Clear local storage
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     
-    // Safe speak on logout
-    if (voiceEnabled && typeof accessibility.speak === 'function') {
-      try {
-        accessibility.speak("You have been logged out successfully. Goodbye!");
-      } catch (e) {
-        console.error("Error with speech synthesis:", e);
-      }
+    if (voiceEnabled) {
+      speak("Logged out successfully.");
     }
-    
-    // Safe announce
-    if (typeof accessibility.announce === 'function') {
-      accessibility.announce("Logged out successfully", "assertive");
-    }
-    
+    announce("Logged out successfully", "assertive");
     navigate("/login");
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
-  // Rest of your component remains the same...
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-gray-900 dark:to-gray-800">
-      {/* Your existing JSX */}
-      <header className="bg-white dark:bg-gray-800 shadow-sm border-b">
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold" aria-label="PMI Logo">PMI</span>
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => navigate("/dashboard")}
+                className="text-slate-500 hover:text-blue-600 hover:bg-blue-50"
+              >
+                <ArrowLeft size={20} />
+              </Button>
+              <div className="w-9 h-9 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-100">
+                <span className="text-white text-sm font-bold">PMI</span>
               </div>
-              <h1 className="text-xl font-bold">PMI AudioBook Admin Dashboard</h1>
+              <h1 className="text-lg font-black text-slate-800 tracking-tight">Admin Portal</h1>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => {
-                  setVoiceEnabled(!voiceEnabled);
-                  if (accessibility.announce) {
-                    accessibility.announce(
-                      voiceEnabled ? "Voice disabled" : "Voice enabled",
-                      "polite"
-                    );
-                  }
-                }}
-                aria-label={voiceEnabled ? "Disable voice" : "Enable voice"}
+                onClick={() => setVoiceEnabled(!voiceEnabled)}
+                className="text-slate-500 hover:text-blue-600"
               >
-                {voiceEnabled ? <Volume2 /> : <VolumeX />}
+                {voiceEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
               </Button>
 
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => {
-                  if (accessibility.toggleHighContrast) {
-                    accessibility.toggleHighContrast();
-                  }
-                }}
-                aria-label="Toggle high contrast"
+                onClick={toggleHighContrast}
+                className="text-slate-500 hover:text-blue-600"
               >
-                <Contrast />
+                <Contrast size={18} />
               </Button>
+
+              <div className="h-6 w-px bg-slate-200 mx-2" />
 
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => {
-                  if (accessibility.toggleLargeText) {
-                    accessibility.toggleLargeText();
-                  }
-                }}
-                aria-label="Toggle large text"
-              >
-                <Type />
-              </Button>
-
-              <Button
-                variant="outline"
                 onClick={handleLogout}
-                className="ml-4"
+                className="text-slate-500 hover:text-red-500 p-2"
+                title="Logout"
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
+                <LogOut size={18} />
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="border-2 border-dashed border-gray-200 rounded-lg p-6">
-            <AdminUpload />
+      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+          <div className="p-1">
+             <AdminUpload />
           </div>
         </div>
       </main>

@@ -22,15 +22,14 @@ const Signup = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [signupSuccess, setSignupSuccess] = useState(false);
   
   const {
     highContrast,
-    largeText,
+    voiceEnabled,
     toggleHighContrast,
-    toggleLargeText,
+    toggleVoiceEnabled,
     announce
   } = useAccessibility();
 
@@ -201,7 +200,7 @@ const Signup = () => {
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-inter">
       {/* Skip to main content link */}
       <a href="#signup-form" className="sr-only-focusable">
         Skip to signup form
@@ -210,20 +209,20 @@ const Signup = () => {
       {/* Accessibility controls */}
       <div className="fixed top-4 right-4 flex gap-2 z-50">
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
-          onClick={() => setVoiceEnabled(!voiceEnabled)}
+          onClick={toggleVoiceEnabled}
+          className={`transition-colors ${voiceEnabled ? "text-blue-600 bg-blue-50" : "text-slate-500 hover:text-blue-600"}`}
           aria-label={voiceEnabled ? "Disable voice feedback" : "Enable voice feedback"}
-          title={voiceEnabled ? "Disable voice feedback" : "Enable voice feedback"}
         >
           {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
         </Button>
         <Button
-          variant="outline"
+          variant="ghost"
           size="icon"
           onClick={toggleHighContrast}
-          aria-label={highContrast ? "Disable high contrast" : "Enable high contrast"}
-          title={highContrast ? "Disable high contrast" : "Enable high contrast"}
+          className="text-slate-500 hover:text-blue-600"
+          aria-label="Toggle high contrast"
         >
           <Contrast className="h-4 w-4" />
         </Button>
@@ -238,15 +237,15 @@ const Signup = () => {
         </Button>
       </div>
 
-      <Card className="w-full max-w-md animate-slide-in hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1" id="signup-form">
-        <CardHeader className="text-center">
+      <Card className="w-full max-w-md shadow-xl border-slate-200 animate-in fade-in slide-in-from-bottom-4 duration-500" id="signup-form">
+        <CardHeader className="text-center pb-2">
           {/* PMI Logo */}
-          <div className="mx-auto mb-4 w-20 h-20 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full flex items-center justify-center shadow-lg transform transition-transform duration-300 hover:scale-110">
-            <span className="text-white text-3xl font-bold drop-shadow" aria-label="PMI Logo">PMI</span>
+          <div className="mx-auto mb-6 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-200 transition-transform duration-300">
+            <span className="text-white text-2xl font-bold" aria-label="PMI Logo">PMI</span>
           </div>
-          <CardTitle className="text-2xl font-bold">Create Your Account</CardTitle>
-          <CardDescription>
-            Join PMI AudioBook for accessible audiobooks
+          <CardTitle className="text-2xl font-bold text-slate-800">Create Account</CardTitle>
+          <CardDescription className="text-slate-500">
+            Join the community and start listening
           </CardDescription>
         </CardHeader>
 
@@ -274,7 +273,7 @@ const Signup = () => {
 
             {/* Name field */}
             <div className="space-y-2">
-              <Label htmlFor="name">
+              <Label htmlFor="name" className="block mb-1.5 font-semibold text-slate-700">
                 Full Name
                 <span className="sr-only">Required field</span>
               </Label>
@@ -302,7 +301,7 @@ const Signup = () => {
 
             {/* Email field */}
             <div className="space-y-2">
-              <Label htmlFor="email">
+              <Label htmlFor="email" className="block mb-1.5 font-semibold text-slate-700">
                 Email Address
                 <span className="sr-only">Required field</span>
               </Label>
@@ -330,7 +329,7 @@ const Signup = () => {
 
             {/* Password field */}
             <div className="space-y-2">
-              <Label htmlFor="password">
+              <Label htmlFor="password" className="block mb-1.5 font-semibold text-slate-700">
                 Password
                 <span className="sr-only">Required field, minimum 8 characters</span>
               </Label>
@@ -403,7 +402,7 @@ const Signup = () => {
 
             {/* Confirm Password field */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">
+              <Label htmlFor="confirmPassword" className="block mb-1.5 font-semibold text-slate-700">
                 Confirm Password
                 <span className="sr-only">Required field</span>
               </Label>
@@ -441,16 +440,13 @@ const Signup = () => {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 hover:shadow-lg"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100 h-11 transition-all"
               disabled={loading || signupSuccess}
               aria-busy={loading}
               onFocus={() => voiceEnabled && speak("Create account button. Press Enter to sign up.")}
             >
               {loading ? (
-                <>
-                  <span className="animate-pulse">Creating account...</span>
-                  <span className="sr-only">Please wait, creating your account</span>
-                </>
+                <span className="animate-pulse">Creating account...</span>
               ) : (
                 <>
                   <UserPlus className="mr-2 h-4 w-4" />
@@ -459,22 +455,21 @@ const Signup = () => {
               )}
             </Button>
 
-            <div className="relative">
+            <div className="relative py-2">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t border-slate-200" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or sign up with</span>
+                <span className="bg-white px-2 text-slate-400">Or sign up with</span>
               </div>
             </div>
 
             <Button
               type="button"
               variant="outline"
-              className="w-full transition-all duration-300 hover:scale-105 hover:shadow-md hover:border-purple-400"
+              className="w-full border-slate-200 h-11 hover:bg-slate-50 transition-colors"
               onClick={() => googleSignup()}
               disabled={loading || signupSuccess}
-              onFocus={() => voiceEnabled && speak("Sign up with Google button")}
             >
               <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
                 <path
