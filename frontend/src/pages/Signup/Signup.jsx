@@ -27,8 +27,10 @@ const Signup = () => {
   
   const {
     highContrast,
+    largeText,
     voiceEnabled,
     toggleHighContrast,
+    toggleLargeText,
     toggleVoiceEnabled,
     announce
   } = useAccessibility();
