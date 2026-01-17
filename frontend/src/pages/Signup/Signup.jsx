@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
 import { Eye, EyeOff, Volume2, VolumeX, Contrast, Type, UserPlus, AlertCircle, CheckCircle } from "lucide-react";
+import pmiLogo from "@/assets/pmi-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -242,8 +243,8 @@ const Signup = () => {
       <Card className="w-full max-w-md shadow-xl border-slate-200 animate-in fade-in slide-in-from-bottom-4 duration-500" id="signup-form">
         <CardHeader className="text-center pb-2">
           {/* PMI Logo */}
-          <div className="mx-auto mb-6 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-200 transition-transform duration-300">
-            <span className="text-white text-2xl font-bold" aria-label="PMI Logo">PMI</span>
+          <div className="mx-auto mb-6 flex items-center justify-center">
+            <img src={pmiLogo} alt="PMI Logo" className="h-16 w-auto shadow-lg shadow-blue-200 transition-transform duration-300" />
           </div>
           <CardTitle className="text-2xl font-bold text-slate-800">Create Account</CardTitle>
           <CardDescription className="text-slate-500">

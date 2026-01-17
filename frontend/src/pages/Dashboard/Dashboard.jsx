@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { BookOpen, LogOut, Volume2, VolumeX, Contrast, Type, Search, Play, Pause, User, Upload } from "lucide-react";
+import pmiLogo from "@/assets/pmi-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
@@ -290,9 +291,7 @@ const Dashboard = () => {
           <div className="flex justify-between h-16 items-center">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-100">
-                <span className="text-white font-bold text-lg">PMI</span>
-              </div>
+              <img src={pmiLogo} alt="PMI Logo" className="h-10 w-auto" />
               <h1 className="text-xl font-extrabold text-slate-800 tracking-tight hidden sm:block">AudioBook</h1>
             </div>
 

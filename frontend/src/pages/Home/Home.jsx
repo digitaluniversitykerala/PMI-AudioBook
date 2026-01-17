@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "./Home.module.css";
 import { BookOpen, ArrowRight, ShieldCheck, Zap, Headphones } from "lucide-react";
+import pmiLogo from "@/assets/pmi-logo.png";
 import { Button } from "@/components/ui/button";
 import { useAccessibility, speak } from "@/hooks/useAccessibility";
 
@@ -27,9 +28,7 @@ const Home = () => {
       {/* Nav */}
       <nav className="relative z-10 max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-100">
-            <span className="text-white font-bold text-lg">PMI</span>
-          </div>
+          <img src={pmiLogo} alt="PMI Logo" className="h-10 w-auto" />
           <span className="text-xl font-black text-slate-800 tracking-tight">AudioBook</span>
         </div>
         <Link to="/login">
