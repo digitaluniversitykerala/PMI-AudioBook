@@ -32,7 +32,8 @@ const bookSchema = new mongoose.Schema(
     totalPlays: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
     releaseDate: { type: Date },
-    language: { type: String, default: 'ml' }
+    language: { type: String, default: 'ml' },
+    uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   },
   { timestamps: true }
 );

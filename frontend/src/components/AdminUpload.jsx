@@ -19,21 +19,35 @@ import {
 import API from '@/api';
 import styles from './AdminUpload.module.css';
 
-const AdminUpload = () => {
+const AdminUpload = ({ existingBook, onComplete }) => {
   const [bookData, setBookData] = useState({
-    title: '',
-    description: '',
-    narrator: '',
-    authors: '',
-    genres: ''
+    title: existingBook?.title || '',
+    description: existingBook?.description || '',
+    narrator: existingBook?.narrator || '',
+    authors: existingBook?.authors?.map(a => a.name).join(', ') || '',
+    genres: existingBook?.genres?.map(g => g.name).join(', ') || ''
   });
   
-  const [chapters, setChapters] = useState([
-    { title: '', duration: '', file: null, fileName: '' }
-  ]);
+  const [chapters, setChapters] = useState(
+    existingBook?.chapters?.length > 0 
+      ? existingBook.chapters.map(c => ({ 
+          title: c.title, 
+          duration: c.duration, 
+          file: null, 
+          fileName: 'Existing File',
+          audioFile: c.audioFile 
+        }))
+      : [{ title: '', duration: '', file: null, fileName: '' }]
+  );
   
   const [coverImage, setCoverImage] = useState(null);
-  const [coverPreview, setCoverPreview] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(
+    existingBook?.coverImage 
+      ? (existingBook.coverImage.startsWith('http') 
+          ? existingBook.coverImage 
+          : `/${existingBook.coverImage.startsWith('uploads/') ? '' : 'uploads/'}${existingBook.coverImage}`)
+      : null
+  );
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState({ message: '', type: '' });
 
@@ -104,8 +118,8 @@ const AdminUpload = () => {
     setUploading(true);
     setStatus({ message: '', type: '' });
 
-    if (!bookData.title || chapters.some(c => !c.title || !c.file)) {
-       setStatus({ message: 'Please fill all required fields and upload all files.', type: 'error' });
+    if (!bookData.title || chapters.some(c => !c.title || (!c.file && !c.audioFile))) {
+       setStatus({ message: 'Please fill all required fields and ensure all chapters have audio.', type: 'error' });
        setUploading(false);
        return;
     }
@@ -123,6 +137,17 @@ const AdminUpload = () => {
       const uploadedChapters = [];
       for (let i = 0; i < chapters.length; i++) {
           const chapter = chapters[i];
+          
+          if (!chapter.file && chapter.audioFile) {
+            // Chapter already has a file and no new file was uploaded
+            uploadedChapters.push({
+                title: chapter.title,
+                duration: parseFloat(chapter.duration) || 0,
+                audioFile: chapter.audioFile
+            });
+            continue;
+          }
+
           setStatus({ message: `Uploading chapter ${i + 1} of ${chapters.length}...`, type: 'info' });
           
           const audioPath = await handleFileUpload('audio', chapter.file);
@@ -140,17 +165,28 @@ const AdminUpload = () => {
         authors: bookData.authors.split(',').map(a => a.trim()).filter(Boolean),
         genres: bookData.genres.split(',').map(g => g.trim()).filter(Boolean),
         chapters: uploadedChapters,
-        coverImage: coverFileName,
+        coverImage: coverFileName || existingBook?.coverImage,
         duration: uploadedChapters.reduce((acc, c) => acc + c.duration, 0)
       };
 
-      await API.post('/books', bookPayload);
+      if (existingBook) {
+        await API.put(`/books/${existingBook._id}`, bookPayload);
+        setStatus({ message: 'Audiobook updated successfully!', type: 'success' });
+      } else {
+        await API.post('/books', bookPayload);
+        setStatus({ message: 'Audiobook published successfully!', type: 'success' });
+      }
 
-      setStatus({ message: 'Audiobook published successfully!', type: 'success' });
-      setBookData({ title: '', description: '', narrator: '', authors: '', genres: '' });
-      setChapters([{ title: '', duration: '', file: null, fileName: '' }]);
-      setCoverImage(null);
-      setCoverPreview(null);
+      setTimeout(() => {
+        if (onComplete) onComplete();
+      }, 1500);
+
+      if (!existingBook) {
+        setBookData({ title: '', description: '', narrator: '', authors: '', genres: '' });
+        setChapters([{ title: '', duration: '', file: null, fileName: '' }]);
+        setCoverImage(null);
+        setCoverPreview(null);
+      }
 
     } catch (error) {
       setStatus({ message: `Error: ${error.message || 'Server error'}`, type: 'error' });
@@ -162,12 +198,12 @@ const AdminUpload = () => {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.header}>
-        <button className={styles.backButton} aria-label="Go back">
+        <button type="button" className={styles.backButton} aria-label="Go back" onClick={() => onComplete && onComplete()}>
           <ArrowLeft size={20} />
         </button>
         <div className={styles.headerText}>
-          <h1 className={styles.title}>Upload Audiobook</h1>
-          <p className={styles.subtitle}>Add a new audiobook to your library</p>
+          <h1 className={styles.title}>{existingBook ? 'Edit Audiobook' : 'Upload Audiobook'}</h1>
+          <p className={styles.subtitle}>{existingBook ? `Updating: ${existingBook.title}` : 'Add a new audiobook to your library'}</p>
         </div>
       </div>
 
@@ -380,10 +416,10 @@ const AdminUpload = () => {
             {uploading ? (
               <><Loader2 className={styles.spinner} size={18} /> Processing...</>
             ) : (
-              <><Upload size={18} /> Publish Audiobook</>
+              <><Upload size={18} /> {existingBook ? 'Update Audiobook' : 'Publish Audiobook'}</>
             )}
           </button>
-          <button type="button" className={styles.cancelButton} onClick={() => window.history.back()}>
+          <button type="button" className={styles.cancelButton} onClick={() => onComplete ? onComplete() : window.history.back()}>
             Cancel
           </button>
         </div>

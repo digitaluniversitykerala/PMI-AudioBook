@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAccessibility, speak } from "@/hooks/useAccessibility";
 import AdminUpload from "@/components/AdminUpload";
+import AdminBookList from "@/components/AdminBookList";
 import API from "@/api";
 
 const AdminDashboard = () => {
@@ -19,6 +20,8 @@ const AdminDashboard = () => {
   const [user, setUser] = useState(null);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('list'); // 'list' or 'upload' or 'edit'
+  const [editingBook, setEditingBook] = useState(null);
   
   const {
     toggleHighContrast,
@@ -142,10 +145,48 @@ const AdminDashboard = () => {
       </header>
 
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="p-1">
-             <AdminUpload />
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Library Management</h2>
+            <p className="text-slate-500">Manage your audiobooks, chapters, and metadata</p>
           </div>
+          <div className="flex bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+            <button 
+              onClick={() => setActiveTab('list')}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'list' ? 'bg-blue-600 text-white shadow-md shadow-blue-100' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
+              All Audiobooks
+            </button>
+            <button 
+              onClick={() => { setActiveTab('upload'); setEditingBook(null); }}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === 'upload' ? 'bg-blue-600 text-white shadow-md shadow-blue-100' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
+              Add New
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
+          {activeTab === 'list' && (
+            <AdminBookList 
+              onEdit={(book) => {
+                setEditingBook(book);
+                setActiveTab('edit');
+              }} 
+            />
+          )}
+
+          {(activeTab === 'upload' || activeTab === 'edit') && (
+            <div className="p-1">
+               <AdminUpload 
+                 existingBook={editingBook} 
+                 onComplete={() => {
+                   setActiveTab('list');
+                   setEditingBook(null);
+                 }} 
+               />
+            </div>
+          )}
         </div>
       </main>
     </div>

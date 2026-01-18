@@ -17,8 +17,9 @@ const processMetadata = async (names, Model) => {
     return processedIds;
 };
 
-export const getAllBooks = async () => {
-    return await Book.find({ isActive: true })
+export const getAllBooks = async (filters = {}) => {
+    const query = { isActive: true, ...filters };
+    return await Book.find(query)
         .populate("authors", "name")
         .populate("genres", "name color")
         .sort({ createdAt: -1 });

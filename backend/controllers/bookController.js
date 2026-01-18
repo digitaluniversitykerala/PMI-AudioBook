@@ -2,7 +2,11 @@ import * as BookService from '../services/bookService.js';
 
 export const getBooks = async (req, res, next) => {
     try {
-        const books = await BookService.getAllBooks();
+        const filters = {};
+        if (req.query.uploadedBy) {
+            filters.uploadedBy = req.query.uploadedBy;
+        }
+        const books = await BookService.getAllBooks(filters);
         res.json(books);
     } catch (err) {
         next(err);
@@ -26,7 +30,13 @@ export const createBook = async (req, res, next) => {
         if (!req.user || req.user.role !== "admin") {
             return res.status(403).json({ error: "Admin access required" });
         }
-        const book = await BookService.createBook(req.body);
+        
+        const bookData = {
+            ...req.body,
+            uploadedBy: req.user.id || req.user._id
+        };
+        
+        const book = await BookService.createBook(bookData);
         res.status(201).json(book);
     } catch (err) {
         next(err);

@@ -306,7 +306,9 @@ const SingleAudioBook = () => {
         <div className={styles.coverContainer}>
           {book.coverImage ? (
             <img 
-              src={book.coverImage.startsWith('/uploads/') ? book.coverImage : `/uploads/${book.coverImage}`} 
+              src={book.coverImage.startsWith('http') 
+                ? book.coverImage 
+                : `/${book.coverImage.startsWith('uploads/') ? '' : 'uploads/'}${book.coverImage}`} 
               alt={book.title} 
               className={styles.coverImage} 
             />
