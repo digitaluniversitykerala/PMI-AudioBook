@@ -3,7 +3,7 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install && npm install --prefix backend && npm install --prefix frontend",
   "framework": "vite",
-  "public": "frontend/dist",
+  "outputDirectory": "frontend/dist",
   "functions": {
     "api/**/*.js": {
       "runtime": "nodejs20.x",
@@ -28,6 +28,6 @@
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
     "EMAIL_USER",
-    "EMAIL_PASSWORD"
+    "EMAIL_PASS"
   ]
 }

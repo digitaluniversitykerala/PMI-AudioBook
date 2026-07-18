@@ -4,6 +4,7 @@
 - GitHub account with this repository
 - Vercel account (sign up at vercel.com)
 - MongoDB Atlas account (sign up at mongodb.com/cloud/atlas)
+- Cloudinary account for media uploads (sign up at cloudinary.com)
 
 ## Step 1: Set Up MongoDB Atlas Database
 
@@ -28,7 +29,18 @@ Example format:
 mongodb+srv://username:password@cluster.mongodb.net/pmi-audiobook?retryWrites=true&w=majority
 ```
 
-## Step 2: Deploy to Vercel
+## Step 2: Set Up Cloudinary (Required for Vercel)
+
+Vercel is a serverless environment, meaning it does not have a permanent file system to store uploaded audiobooks or cover images. We **must** use Cloudinary to store these media files.
+
+1. Go to [Cloudinary](https://cloudinary.com) and create a free account.
+2. Go to your Dashboard and look for your **Product Environment Credentials**.
+3. Copy the following three values to use in your Vercel Environment Variables:
+   - Cloud Name (`CLOUDINARY_CLOUD_NAME`)
+   - API Key (`CLOUDINARY_API_KEY`)
+   - API Secret (`CLOUDINARY_API_SECRET`)
+
+## Step 3: Deploy to Vercel
 
 ### Option A: Using Vercel Dashboard (Easiest)
 
@@ -43,7 +55,10 @@ mongodb+srv://username:password@cluster.mongodb.net/pmi-audiobook?retryWrites=tr
    - `GOOGLE_CLIENT_ID`: Your Google OAuth credentials
    - `GOOGLE_CLIENT_SECRET`: Your Google OAuth secret
    - `EMAIL_USER`: Your email address
-   - `EMAIL_PASSWORD`: Your app-specific password
+   - `EMAIL_PASS`: Your app-specific password
+   - `CLOUDINARY_CLOUD_NAME`: From Cloudinary dashboard
+   - `CLOUDINARY_API_KEY`: From Cloudinary dashboard
+   - `CLOUDINARY_API_SECRET`: From Cloudinary dashboard
 6. Click "Deploy"
 
 ### Option B: Using Vercel CLI
@@ -67,7 +82,7 @@ vercel env add JWT_SECRET
 vercel --prod
 ```
 
-## Step 3: Verify Deployment
+## Step 4: Verify Deployment
 
 1. Your frontend will be at: `https://your-project.vercel.app`
 2. Your API will be at: `https://your-project.vercel.app/api/*`
@@ -83,7 +98,10 @@ vercel --prod
 | GOOGLE_CLIENT_ID | From Google Cloud Console | xxx.apps.googleusercontent.com |
 | GOOGLE_CLIENT_SECRET | From Google Cloud Console | xxx |
 | EMAIL_USER | Email for sending emails | your@gmail.com |
-| EMAIL_PASSWORD | Gmail app password | xxxx xxxx xxxx xxxx |
+| EMAIL_PASS | Gmail app password | xxxx xxxx xxxx xxxx |
+| CLOUDINARY_CLOUD_NAME | From Cloudinary Dashboard | your_cloud_name |
+| CLOUDINARY_API_KEY | From Cloudinary Dashboard | your_api_key |
+| CLOUDINARY_API_SECRET | From Cloudinary Dashboard | your_api_secret |
 
 ## Getting Gmail App Password
 
@@ -92,7 +110,7 @@ vercel --prod
 3. Go to "App passwords"
 4. Select "Mail" and "Windows Computer"
 5. Generate password (16 characters with spaces)
-6. Use this in EMAIL_PASSWORD variable
+6. Use this in EMAIL_PASS variable
 
 ## Getting Google OAuth Credentials
 

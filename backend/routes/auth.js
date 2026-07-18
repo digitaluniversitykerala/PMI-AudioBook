@@ -1,7 +1,7 @@
 import express from "express";
 import { signup, login, forgotPassword, resetPassword, refreshToken, logout } from "../controllers/authController.js";
 import { uploadAudio, uploadCover } from "../controllers/uploadController.js";
-import { verifyToken } from "../middleware/authMiddleware.js";
+import { verifyToken, requireAdmin, authLimiter, passwordResetLimiter } from "../middleware/authMiddleware.js";
 import { upload } from "../middleware/upload.js";
 import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
@@ -75,16 +75,17 @@ router.post("/google", async (req, res, next) => {
   }
 });
 
-// Auth Routes
-router.post("/signup", signup);
-router.post("/login", login);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
+// Auth Routes (rate-limited to slow brute-force attacks)
+router.post("/signup", authLimiter, signup);
+router.post("/login", authLimiter, login);
+router.post("/forgot-password", passwordResetLimiter, forgotPassword);
+router.post("/reset-password", passwordResetLimiter, resetPassword);
 router.post("/refresh-token", refreshToken);
 router.post("/logout", logout);
+router.post("/google", authLimiter);
 
-// File upload routes
-router.post("/upload/audio", verifyToken, upload.single('audioFile'), uploadAudio);
-router.post("/upload/cover", verifyToken, upload.single('coverImage'), uploadCover);
+// File upload routes (admin only)
+router.post("/upload/audio", verifyToken, requireAdmin, upload.single('audioFile'), uploadAudio);
+router.post("/upload/cover", verifyToken, requireAdmin, upload.single('coverImage'), uploadCover);
 
 export default router;

@@ -311,6 +311,11 @@ const SingleAudioBook = () => {
                 : `/${book.coverImage.startsWith('uploads/') ? '' : 'uploads/'}${book.coverImage}`} 
               alt={book.title} 
               className={styles.coverImage} 
+              onError={(e) => {
+                e.target.onerror = null; 
+                e.target.style.display = 'none';
+                e.target.parentElement.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open text-gray-400"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>';
+              }}
             />
           ) : (
             <BookOpen size={64} className={styles.bookIcon} />

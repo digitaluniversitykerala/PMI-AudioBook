@@ -405,6 +405,12 @@ const Dashboard = () => {
                     src={audiobook.coverImage} 
                     alt="" 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      e.target.onerror = null; // Prevent infinite loop
+                      e.target.style.display = 'none'; // Hide the broken image
+                      // Optionally show the fallback div by modifying DOM or better yet, just hide render
+                      e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-blue-50"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open text-blue-200"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>';
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-blue-50">
