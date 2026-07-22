@@ -15,9 +15,7 @@ const __dirname = path.dirname(__filename);
 
 const app = createApp();
 
-// Local disk fallback for media. Harmless in production (Cloudinary is used),
-// but keeps `npm run dev` working with the legacy uploads/ folder.
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// Local disk fallback for media is now handled in src/app.js.
 
 const PORT = process.env.PORT || 5000;
 

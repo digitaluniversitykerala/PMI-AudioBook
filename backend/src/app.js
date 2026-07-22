@@ -14,6 +14,8 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // Routes
 import authRoutes from "../routes/auth.js";
@@ -99,6 +101,11 @@ export function createApp() {
   app.get("/", (_req, res) =>
     res.json({ name: "PMI-AudioBook API", status: "running" })
   );
+
+  // Serve static files for local development (before 404 handler)
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
   // ── 404 + error handler (last) ─────────────────────────────────────────
   app.use((req, res) => res.status(404).json({ error: "Route not found" }));
