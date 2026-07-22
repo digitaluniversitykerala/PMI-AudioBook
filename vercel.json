@@ -20,14 +20,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "env": [
-    "MONGO_URI",
-    "FRONTEND_URL",
-    "JWT_SECRET",
-    "GOOGLE_CLIENT_ID",
-    "GOOGLE_CLIENT_SECRET",
-    "EMAIL_USER",
-    "EMAIL_PASS"
   ]
 }
