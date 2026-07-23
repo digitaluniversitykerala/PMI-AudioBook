@@ -226,7 +226,7 @@ const Dashboard = () => {
       }
 
       // Use the backend URL that serves /uploads statically
-      audio.src = `http://localhost:5000${audiobook.audioUrl}`;
+      audio.src = audiobook.audioUrl;
 
       // Some browsers may reject the play() promise even when audio plays fine.
       // We intentionally ignore those non-fatal errors to avoid noisy console output.

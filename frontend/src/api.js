@@ -1,9 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 
-  (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-    ? `${window.location.origin}/api`
-    : "http://localhost:5000/api");
+const API_BASE_URL = "/api";
 
 const API = axios.create({
   // Use the API base; callers should include "/auth/..." or other namespaces explicitly
@@ -36,7 +33,7 @@ API.interceptors.response.use(
   }
 );
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api").replace("/api", "");
+const BASE_URL = "";
 
 export { BASE_URL };
 export default API;
