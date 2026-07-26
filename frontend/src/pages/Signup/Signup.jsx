@@ -1,528 +1,339 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useGoogleLogin } from "@react-oauth/google";
-import { Eye, EyeOff, Volume2, VolumeX, Contrast, Type, UserPlus, AlertCircle, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, UserPlus, Headphones, BookOpen, ShieldCheck, CheckCircle, ArrowLeft } from "lucide-react";
 import pmiLogo from "@/assets/pmi-logo.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAccessibility, speak } from "@/hooks/useAccessibility";
 import API from "@/api";
 
+const strengthLabels = ["", "Weak", "Fair", "Good", "Strong"];
+const strengthColors = ["", "bg-red-400", "bg-amber-400", "bg-blue-500", "bg-emerald-500"];
+
 const Signup = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: ""
-  });
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [passwordStrength, setPasswordStrength] = useState(0);
-  const [signupSuccess, setSignupSuccess] = useState(false);
-  
-  const {
-    highContrast,
-    largeText,
-    voiceEnabled,
-    toggleHighContrast,
-    toggleLargeText,
-    toggleVoiceEnabled,
-    announce
-  } = useAccessibility();
+  const [success, setSuccess] = useState(false);
 
-  // Voice feedback on component mount
+  const { voiceEnabled, announce } = useAccessibility();
+
   useEffect(() => {
-    if (voiceEnabled) {
-      speak("Welcome to PMI AudioBook signup page. Create your account to access audiobooks. Press Tab to navigate through the form fields.");
-    }
-    announce("Signup page loaded. Name field focused.", "polite");
+    if (voiceEnabled) speak("Welcome to PMI AudioBook. Create your account to access audiobooks.");
+    announce("Signup page loaded.", "polite");
   }, []);
 
-  // Calculate password strength
-  const calculatePasswordStrength = (password) => {
-    let strength = 0;
-    if (password.length >= 8) strength++;
-    if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
-    if (password.match(/[0-9]/)) strength++;
-    if (password.match(/[^a-zA-Z0-9]/)) strength++;
-    return strength;
+  const calcStrength = (p) => {
+    let s = 0;
+    if (p.length >= 8) s++;
+    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++;
+    if (/[0-9]/.test(p)) s++;
+    if (/[^a-zA-Z0-9]/.test(p)) s++;
+    return s;
   };
 
-  // Validate form
-  const validateForm = () => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "password") setPasswordStrength(calcStrength(value));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const validate = () => {
     const newErrors = {};
-    
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
-    }
-    
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email is invalid";
-    }
-    
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-    }
-    
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "Please confirm your password";
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
-    }
-    
+    if (!formData.name.trim())                              newErrors.name = "Name is required";
+    if (!formData.email.trim())                             newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))         newErrors.email = "Invalid email address";
+    if (!formData.password)                                 newErrors.password = "Password is required";
+    else if (formData.password.length < 8)                  newErrors.password = "Minimum 8 characters";
+    if (!formData.confirmPassword)                          newErrors.confirmPassword = "Please confirm your password";
+    else if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Passwords do not match";
     return newErrors;
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      const firstError = Object.values(validationErrors)[0];
-      if (voiceEnabled) {
-        speak(`Validation error: ${firstError}`);
-      }
-      announce(firstError, "assertive");
+    const errs = validate();
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      const first = Object.values(errs)[0];
+      if (voiceEnabled) speak(first);
+      announce(first, "assertive");
       return;
     }
-    
-    setErrors({});
     setLoading(true);
-    
-    if (voiceEnabled) {
-      speak("Creating your account. Please wait.");
-    }
-    announce("Processing signup request", "polite");
+    if (voiceEnabled) speak("Creating your account. Please wait.");
 
     try {
       const response = await API.post("/auth/signup", {
         name: formData.name,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
       });
-      
       if (response.data.token) {
         localStorage.setItem("token", response.data.token);
-        if (response.data.refreshToken) {
-          localStorage.setItem("refreshToken", response.data.refreshToken);
-        }
+        if (response.data.refreshToken) localStorage.setItem("refreshToken", response.data.refreshToken);
         localStorage.setItem("user", JSON.stringify(response.data.user));
-        
-        if (voiceEnabled) {
-          speak(`Welcome ${response.data.user.name}. Account created successfully. Redirecting to dashboard.`);
-        }
-        announce("Signup successful. Redirecting to dashboard.", "assertive");
-        setSignupSuccess(true);
-        
-        setTimeout(() => navigate("/dashboard"), 2000);
+        setSuccess(true);
+        if (voiceEnabled) speak(`Welcome, ${response.data.user.name}! Your account has been created.`);
+        announce("Account created successfully. Redirecting to dashboard.", "assertive");
+        setTimeout(() => navigate("/dashboard"), 1200);
       }
     } catch (err) {
-      const errorMsg = err.response?.data?.error || "Signup failed. Please try again.";
-      setErrors({ general: errorMsg });
-      if (voiceEnabled) {
-        speak(errorMsg);
-      }
-      announce(errorMsg, "assertive");
+      const msg = err.response?.data?.error || "Signup failed. Please try again.";
+      setErrors({ form: msg });
+      if (voiceEnabled) speak(msg);
+      announce(msg, "assertive");
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Calculate password strength
-    if (name === "password") {
-      setPasswordStrength(calculatePasswordStrength(value));
-    }
-    
-    // Clear error for this field when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
-    }
-  };
-
-  // Google signup handler
-  const googleSignup = useGoogleLogin({
+  const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
         setLoading(true);
-        if (voiceEnabled) {
-          speak("Processing Google sign up.");
-        }
-        
+        setErrors({});
+        const userInfo = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        }).then((r) => r.json());
+        if (!userInfo || userInfo.error) throw new Error("Failed to fetch Google user info");
+
         const response = await API.post("/auth/google", {
-          token: tokenResponse.access_token
+          token: tokenResponse.id_token || tokenResponse.access_token,
         });
-        
         if (response.data.token) {
           localStorage.setItem("token", response.data.token);
-          if (response.data.refreshToken) {
-            localStorage.setItem("refreshToken", response.data.refreshToken);
-          }
-          localStorage.setItem("user", JSON.stringify(response.data.user));
-          
-          if (voiceEnabled) {
-            speak(`Welcome ${response.data.user.name}. Account created. Redirecting to dashboard.`);
-          }
-          announce("Google signup successful.", "assertive");
-          navigate("/dashboard");
+          if (response.data.refreshToken) localStorage.setItem("refreshToken", response.data.refreshToken);
+          if (response.data.user) localStorage.setItem("user", JSON.stringify(response.data.user));
+          setSuccess(true);
+          setTimeout(() => navigate("/dashboard", { replace: true }), 800);
+        } else {
+          throw new Error("No token received");
         }
       } catch (err) {
-        const errorMsg = "Google signup failed. Please try again.";
-        setErrors({ general: errorMsg });
-        if (voiceEnabled) {
-          speak(errorMsg);
-        }
-        announce(errorMsg, "assertive");
+        const msg = err.response?.data?.error || "Google sign-in failed. Please try again.";
+        setErrors({ form: msg });
+        if (voiceEnabled) speak(msg);
       } finally {
         setLoading(false);
       }
     },
-    onError: () => {
-      const errorMsg = "Google signup failed";
-      setErrors({ general: errorMsg });
-      if (voiceEnabled) {
-        speak(errorMsg);
-      }
-    }
+    onError: (err) => {
+      const msg = err.error_description || "Google sign-in was cancelled.";
+      setErrors({ form: msg });
+    },
   });
 
+  if (success) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center font-inter">
+        <div className="text-center animate-fade-up">
+          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle size={32} className="text-emerald-500" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 mb-2">Account created!</h2>
+          <p className="text-slate-500">Redirecting to your dashboard…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-inter">
-      {/* Skip to main content link */}
-      <a href="#signup-form" className="sr-only-focusable">
-        Skip to signup form
-      </a>
-      
-      {/* Accessibility controls */}
-      <div className="fixed top-4 right-4 flex gap-2 z-50">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleVoiceEnabled}
-          className={`transition-colors ${voiceEnabled ? "text-blue-600 bg-blue-50" : "text-slate-500 hover:text-blue-600"}`}
-          aria-label={voiceEnabled ? "Disable voice feedback" : "Enable voice feedback"}
-        >
-          {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={toggleHighContrast}
-          className="text-slate-500 hover:text-blue-600"
-          aria-label="Toggle high contrast"
-        >
-          <Contrast className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={toggleLargeText}
-          aria-label={largeText ? "Disable large text" : "Enable large text"}
-          title={largeText ? "Disable large text" : "Enable large text"}
-        >
-          <Type className="h-4 w-4" />
-        </Button>
+    <div className="min-h-screen flex font-inter">
+
+      {/* ── Left panel ───────────────────────────────────── */}
+      <div className="hidden lg:flex lg:w-[52%] relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 flex-col justify-between p-12">
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-600/20 rounded-full blur-[80px]" />
+        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-blue-600/15 rounded-full blur-[60px]" />
+
+        <div className="relative z-10 flex items-center gap-3">
+          <img src={pmiLogo} alt="PMI Logo" className="h-11 w-auto brightness-0 invert" />
+          <span className="text-white text-2xl font-black tracking-tight">AudioBook</span>
+        </div>
+
+        <div className="relative z-10">
+          <h2 className="text-4xl font-black text-white leading-tight mb-4">
+            Join thousands of<br />
+            <span className="text-indigo-400">curious listeners.</span>
+          </h2>
+          <p className="text-blue-100/70 text-base leading-relaxed mb-10 max-w-sm">
+            Create your free account in under a minute and dive into our entire library of premium audiobooks.
+          </p>
+          <div className="space-y-4">
+            {[
+              { icon: Headphones, text: "Crystal-clear audio narrations" },
+              { icon: BookOpen,    text: "Access hundreds of titles instantly" },
+              { icon: ShieldCheck, text: "Accessible to everyone, always" },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Icon size={15} className="text-indigo-300" />
+                </div>
+                <span className="text-blue-100/80 text-sm font-medium">{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="relative z-10 text-blue-200/30 text-xs">
+          &copy; {new Date().getFullYear()} PMI AudioBook
+        </p>
       </div>
 
-      <Card className="w-full max-w-md shadow-xl border-slate-200 animate-in fade-in slide-in-from-bottom-4 duration-500" id="signup-form">
-        <CardHeader className="text-center pb-2">
-          {/* PMI Logo */}
-          <div className="mx-auto mb-6 flex items-center justify-center">
-            <img src={pmiLogo} alt="PMI Logo" className="h-16 w-auto shadow-lg shadow-blue-200 transition-transform duration-300" />
+      {/* ── Right panel ──────────────────────────────────── */}
+      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 px-6 py-12 overflow-y-auto">
+        <a href="#signup-form" className="sr-only-focusable">Skip to signup form</a>
+
+        <div className="w-full max-w-md animate-fade-up">
+
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2 mb-6 lg:hidden">
+            <img src={pmiLogo} alt="PMI Logo" className="h-8 w-auto" />
+            <span className="text-lg font-black text-slate-800">AudioBook</span>
           </div>
-          <CardTitle className="text-2xl font-bold text-slate-800">Create Account</CardTitle>
-          <CardDescription className="text-slate-500">
-            Join the community and start listening
-          </CardDescription>
-        </CardHeader>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Success message */}
-            {signupSuccess && (
-              <Alert className="animate-slide-in border-green-500 bg-green-50 dark:bg-green-900/20">
-                <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-600 dark:text-green-400">
-                  Account created successfully! Redirecting to dashboard...
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {/* General error message */}
-            {errors.general && !signupSuccess && (
-              <Alert variant="destructive" className="animate-slide-in">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {errors.general}
-                </AlertDescription>
-              </Alert>
-            )}
+          <Link to="/login" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-600 mb-6 transition-colors">
+            <ArrowLeft size={14} /> Back to sign in
+          </Link>
 
-            {/* Name field */}
-            <div className="space-y-2">
-              <Label htmlFor="name" className="block mb-1.5 font-semibold text-slate-700">
-                Full Name
-                <span className="sr-only">Required field</span>
-              </Label>
+          <h1 className="text-3xl font-black text-slate-900 mb-1">Create your account</h1>
+          <p className="text-slate-500 mb-7">It's free and only takes a minute.</p>
+
+          {/* Google button first */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => googleLogin()}
+            disabled={loading}
+            className="w-full h-12 border-slate-200 rounded-xl font-semibold text-slate-700 hover:bg-white hover:border-blue-300 mb-5 transition-colors"
+          >
+            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Continue with Google
+          </Button>
+
+          {/* Divider */}
+          <div className="relative mb-5">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200" /></div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-slate-50 px-3 text-slate-400 font-medium">Or sign up with email</span>
+            </div>
+          </div>
+
+          {/* Form error */}
+          {errors.form && (
+            <div role="alert" className="mb-5 p-3.5 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm font-medium">
+              {errors.form}
+            </div>
+          )}
+
+          <form id="signup-form" onSubmit={handleSubmit} className="space-y-4">
+            {/* Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-sm font-semibold text-slate-700">Full name</Label>
               <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Enter your full name"
-                value={formData.name}
-                onChange={handleInputChange}
-                required
-                autoComplete="name"
-                aria-required="true"
-                aria-invalid={errors.name ? "true" : "false"}
-                aria-describedby={errors.name ? "name-error" : undefined}
-                onFocus={() => voiceEnabled && speak("Full name field. Type your name.")}
-                className="enhanced-focus transition-all duration-200 hover:border-purple-400"
+                id="name" name="name" type="text"
+                placeholder="Your full name"
+                value={formData.name} onChange={handleChange}
+                required autoComplete="name"
+                className={`enhanced-focus h-11 rounded-xl border-slate-200 bg-white ${errors.name ? "border-red-400" : ""}`}
               />
-              {errors.name && (
-                <p id="name-error" className="text-sm text-red-600" role="alert">
-                  {errors.name}
-                </p>
-              )}
+              {errors.name && <p className="text-xs text-red-500">{errors.name}</p>}
             </div>
 
-            {/* Email field */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="block mb-1.5 font-semibold text-slate-700">
-                Email Address
-                <span className="sr-only">Required field</span>
-              </Label>
+            {/* Email */}
+            <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm font-semibold text-slate-700">Email address</Label>
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="Enter your email"
-                value={formData.email}
-                onChange={handleInputChange}
-                required
-                autoComplete="email"
-                aria-required="true"
-                aria-invalid={errors.email ? "true" : "false"}
-                aria-describedby={errors.email ? "email-error" : undefined}
-                onFocus={() => voiceEnabled && speak("Email address field. Type your email.")}
-                className="enhanced-focus transition-all duration-200 hover:border-purple-400"
+                id="email" name="email" type="email"
+                placeholder="you@example.com"
+                value={formData.email} onChange={handleChange}
+                required autoComplete="email"
+                className={`enhanced-focus h-11 rounded-xl border-slate-200 bg-white ${errors.email ? "border-red-400" : ""}`}
               />
-              {errors.email && (
-                <p id="email-error" className="text-sm text-red-600" role="alert">
-                  {errors.email}
-                </p>
-              )}
+              {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
             </div>
 
-            {/* Password field */}
-            <div className="space-y-2">
-              <Label htmlFor="password" className="block mb-1.5 font-semibold text-slate-700">
-                Password
-                <span className="sr-only">Required field, minimum 8 characters</span>
-              </Label>
+            {/* Password */}
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-sm font-semibold text-slate-700">Password</Label>
               <div className="relative">
                 <Input
-                  id="password"
-                  name="password"
+                  id="password" name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Create a password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  autoComplete="new-password"
-                  aria-required="true"
-                  aria-invalid={errors.password ? "true" : "false"}
-                  aria-describedby="password-requirements"
-                  onFocus={() => voiceEnabled && speak("Password field. Create a password with at least 8 characters.")}
-                  className="enhanced-focus pr-10 transition-all duration-200 hover:border-purple-400"
+                  placeholder="Min. 8 characters"
+                  value={formData.password} onChange={handleChange}
+                  required autoComplete="new-password"
+                  className={`enhanced-focus h-11 rounded-xl border-slate-200 bg-white pr-11 ${errors.password ? "border-red-400" : ""}`}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              <p id="password-requirements" className="text-xs text-muted-foreground">
-                Password must be at least 8 characters long
-              </p>
-              
-              {/* Password strength indicator */}
+              {/* Strength bar */}
               {formData.password && (
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span>Password strength:</span>
-                    <span className="font-medium">
-                      {passwordStrength === 0 ? "Too weak" :
-                       passwordStrength === 1 ? "Weak" :
-                       passwordStrength === 2 ? "Fair" :
-                       passwordStrength === 3 ? "Good" : "Strong"}
-                    </span>
+                <div className="mt-1.5 space-y-1">
+                  <div className="flex gap-1">
+                    {[1,2,3,4].map((i) => (
+                      <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${i <= passwordStrength ? strengthColors[passwordStrength] : "bg-slate-200"}`} />
+                    ))}
                   </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full transition-all duration-300 ${
-                        passwordStrength === 0 ? "bg-red-500 w-1/5" :
-                        passwordStrength === 1 ? "bg-orange-500 w-2/5" :
-                        passwordStrength === 2 ? "bg-yellow-500 w-3/5" :
-                        passwordStrength === 3 ? "bg-blue-500 w-4/5" :
-                        "bg-green-500 w-full"
-                      }`}
-                    />
-                  </div>
-                  {passwordStrength < 3 && (
-                    <p className="text-xs text-muted-foreground">
-                      Tip: Use uppercase, lowercase, numbers, and symbols for a stronger password
-                    </p>
-                  )}
+                  <p className="text-xs text-slate-500">{strengthLabels[passwordStrength]} password</p>
                 </div>
               )}
-              
-              {errors.password && (
-                <p className="text-sm text-red-600" role="alert">
-                  {errors.password}
-                </p>
-              )}
+              {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
             </div>
 
-            {/* Confirm Password field */}
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="block mb-1.5 font-semibold text-slate-700">
-                Confirm Password
-                <span className="sr-only">Required field</span>
-              </Label>
+            {/* Confirm password */}
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword" className="text-sm font-semibold text-slate-700">Confirm password</Label>
               <div className="relative">
                 <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  required
-                  autoComplete="new-password"
-                  aria-required="true"
-                  aria-invalid={errors.confirmPassword ? "true" : "false"}
-                  aria-describedby={errors.confirmPassword ? "confirm-error" : undefined}
-                  onFocus={() => voiceEnabled && speak("Confirm password field. Re-enter your password.")}
-                  className="enhanced-focus pr-10 transition-all duration-200 hover:border-purple-400"
+                  id="confirmPassword" name="confirmPassword"
+                  type={showConfirm ? "text" : "password"}
+                  placeholder="Repeat your password"
+                  value={formData.confirmPassword} onChange={handleChange}
+                  required autoComplete="new-password"
+                  className={`enhanced-focus h-11 rounded-xl border-slate-200 bg-white pr-11 ${errors.confirmPassword ? "border-red-400" : ""}`}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                  aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                  {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {errors.confirmPassword && (
-                <p id="confirm-error" className="text-sm text-red-600" role="alert">
-                  {errors.confirmPassword}
-                </p>
-              )}
+              {errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword}</p>}
             </div>
 
+            {/* Submit */}
             <Button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-100 h-11 transition-all"
-              disabled={loading || signupSuccess}
-              aria-busy={loading}
-              onFocus={() => voiceEnabled && speak("Create account button. Press Enter to sign up.")}
+              type="submit" disabled={loading} aria-busy={loading}
+              className="w-full h-12 text-base font-bold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200 mt-2 transition-all duration-200"
             >
-              {loading ? (
-                <span className="animate-pulse">Creating account...</span>
-              ) : (
-                <>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Create Account
-                </>
+              {loading ? <span className="animate-pulse">Creating account…</span> : (
+                <><UserPlus className="mr-2 h-4 w-4" /> Create Account</>
               )}
-            </Button>
-
-            <div className="relative py-2">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-slate-400">Or sign up with</span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-slate-200 h-11 hover:bg-slate-50 transition-colors"
-              onClick={() => googleSignup()}
-              disabled={loading || signupSuccess}
-            >
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                <path
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  fill="#4285F4"
-                />
-                <path
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  fill="#34A853"
-                />
-                <path
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  fill="#FBBC05"
-                />
-                <path
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  fill="#EA4335"
-                />
-              </svg>
-              Sign up with Google
             </Button>
           </form>
-        </CardContent>
 
-        <CardFooter className="text-center text-sm">
-          <div className="w-full">
-            <p className="text-muted-foreground">
-              Already have an account?{" "}
-              <Link
-                to="/login"
-                className="text-blue-600 hover:underline font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
-                onFocus={() => voiceEnabled && speak("Sign in link. Go to login page.")}
-              >
-                Sign in
-              </Link>
-            </p>
-            <p className="mt-4 text-xs text-muted-foreground">
-              By creating an account, you agree to our accessible audiobook service terms.
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              <kbd className="px-1 py-0.5 text-xs font-mono bg-muted rounded">Tab</kbd> to navigate •{" "}
-              <kbd className="px-1 py-0.5 text-xs font-mono bg-muted rounded">Enter</kbd> to select
-            </p>
-          </div>
-        </CardFooter>
-      </Card>
-
-      {/* Hidden live region for screen reader announcements */}
-      <div aria-live="polite" aria-atomic="true" className="sr-only">
-        <span role="status"></span>
+          <p className="mt-6 text-center text-sm text-slate-500">
+            Already have an account?{" "}
+            <Link to="/login" className="text-blue-600 font-semibold hover:underline">Sign in</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

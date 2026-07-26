@@ -82,7 +82,6 @@ router.post("/forgot-password", passwordResetLimiter, forgotPassword);
 router.post("/reset-password", passwordResetLimiter, resetPassword);
 router.post("/refresh-token", refreshToken);
 router.post("/logout", logout);
-router.post("/google", authLimiter);
 
 // File upload routes (admin only)
 router.post("/upload/audio", verifyToken, requireAdmin, upload.single('audioFile'), uploadAudio);

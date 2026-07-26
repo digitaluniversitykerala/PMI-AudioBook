@@ -9,7 +9,7 @@ const generateTokens = (userId, email) => {
   const accessToken = jwt.sign(
     { id: userId, email },
     process.env.JWT_SECRET,
-    { expiresIn: "15m" } // Short-lived access token
+    { expiresIn: "1h" } // 1-hour access token (extended for audiobook listening sessions)
   );
   
   const refreshToken = jwt.sign(

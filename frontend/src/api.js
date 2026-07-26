@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 const API = axios.create({
   // Use the API base; callers should include "/auth/..." or other namespaces explicitly
