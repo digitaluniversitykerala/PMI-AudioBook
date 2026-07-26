@@ -6,6 +6,7 @@ import Dashboard from "../pages/Dashboard/Dashboard";
 import AdminDashboard from "../pages/Admin";
 import SingleAudioBook from "../pages/SingleAudioBook/SingleAudioBook";
 import { RouteErrorFallback } from "../components/ErrorBoundary";
+import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
 
 const router = createBrowserRouter([
   {
@@ -28,15 +29,24 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorFallback />,
     element: <Dashboard />,
   },
+  // Primary admin route
+  {
+    path: "/admin",
+    element: <AdminDashboard />,
+  },
+  // Backwards-compat redirect for any saved /admindashboard links
   {
     path: "/admindashboard",
-    errorElement: <RouteErrorFallback />,
-    element: <AdminDashboard />,
+    element: <Navigate to="/admin" replace />,
   },
   {
     path: "/book/:id",
     errorElement: <RouteErrorFallback />,
     element: <SingleAudioBook />,
+  },
+  {
+    path: "/forgot-password",
+    element: <ForgotPassword />,
   },
   // Redirect any unknown paths to home
   {

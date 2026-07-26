@@ -25,14 +25,7 @@ const AdminBookList = ({ onEdit }) => {
   const fetchBooks = async () => {
     try {
       setLoading(true);
-      const userData = localStorage.getItem("user");
-      let filters = "";
-      if (userData) {
-        const user = JSON.parse(userData);
-        filters = `?uploadedBy=${user.id || user._id}`;
-      }
-      
-      const response = await API.get(`/books${filters}`);
+      const response = await API.get(`/books`);
       const data = response.data.books || response.data || [];
       setBooks(data);
       setError(null);
@@ -43,6 +36,7 @@ const AdminBookList = ({ onEdit }) => {
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     fetchBooks();
