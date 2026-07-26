@@ -1,14 +1,12 @@
 // server.js — long-running entry (local dev + any non-serverless host)
 // Vercel uses api/index.js instead.
+import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url";
 import express from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 
 import { createApp } from "./src/app.js";
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
